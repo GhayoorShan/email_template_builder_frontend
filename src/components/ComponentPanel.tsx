@@ -9,7 +9,7 @@ import { useStore } from "../store";
 import { generateMjml } from "../utils/mjmlGenerator";
 import { compileMjml } from "../api";
 
-const availableComponents = [
+export const availableComponents = [
   { id: "Text", icon: <BeakerIcon className="h-6 w-6 mr-2" /> },
   { id: "Button", icon: <CursorArrowRaysIcon className="h-6 w-6 mr-2" /> },
   { id: "Image", icon: <PhotoIcon className="h-6 w-6 mr-2" /> },

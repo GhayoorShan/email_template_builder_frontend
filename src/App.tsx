@@ -2,17 +2,16 @@ import "./App.css";
 import { useState, useEffect } from "react";
 import { DndContext } from "@dnd-kit/core";
 import type { DragEndEvent } from "@dnd-kit/core";
-import { useStore } from "./store";
+import { useStore, type CanvasComponent } from "./store";
 import { useDebounce } from "./hooks/useDebounce";
 import { generateMjml } from "./utils/mjmlGenerator";
-import { ComponentPanel } from "./components/ComponentPanel";
+import { ComponentPanel, availableComponents } from "./components/ComponentPanel";
 import { Canvas } from "./components/Canvas";
 import { PropertiesPanel } from "./components/PropertiesPanel";
 import { compileMjml } from "./api";
 
 function App() {
-  const addComponent = useStore((state) => state.addComponent);
-  const components = useStore((state) => state.components);
+  const { components, addComponent, moveComponent } = useStore();
   const [compiledHtml, setCompiledHtml] = useState(
     "<html><body><p>Preview will appear here.</p></body></html>"
   );
@@ -21,10 +20,34 @@ function App() {
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
 
-    // If the item is dropped over the canvas, add it to the store
-    if (over && over.id === "canvas-drop-area") {
-      const componentType = active.id as string;
-      addComponent(componentType as "Text" | "Button" | "Image");
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // Scenario 1: Dragging a new component from the panel
+        const isNewComponent = availableComponents.some((c: { id: string }) => c.id === activeId);
+
+    if (isNewComponent) {
+      const componentType = activeId as CanvasComponent['type'];
+      const overIndex = components.findIndex((c) => c.id === overId);
+      
+      // If dropped on the canvas drop area directly or on the last item, append it
+      if (overId === 'canvas-drop-area' || overIndex === components.length - 1) {
+        addComponent(componentType);
+      } else {
+        // Otherwise, insert it at the position of the item it was dropped on
+        addComponent(componentType, overIndex);
+      }
+      return;
+    }
+
+    // Scenario 2: Reordering an existing component
+    const activeIndex = components.findIndex((c) => c.id === activeId);
+    const overIndex = components.findIndex((c) => c.id === overId);
+
+    if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+      moveComponent(activeIndex, overIndex);
     }
   }
 

@@ -44,16 +44,27 @@ export type CanvasComponent = TextComponent | ButtonComponent | ImageComponent;
 interface StoreState {
   components: CanvasComponent[];
   activeId: string | null;
-  addComponent: (type: CanvasComponent['type']) => void;
+  addComponent: (type: CanvasComponent['type'], index?: number) => void;
+  moveComponent: (fromIndex: number, toIndex: number) => void;
   setActiveId: (id: string | null) => void;
   updateComponent: (id: string, newProps: Partial<CanvasComponent>) => void;
+  removeComponent: (id: string) => void;
 }
 
-export const useStore = create<StoreState>()((set, get) => ({
+export const useStore = create<StoreState>()((set) => ({
   components: [], // This will hold all components on the canvas
   activeId: null, // This will hold the ID of the selected component
 
-  addComponent: (type: CanvasComponent['type']) => {
+    moveComponent: (fromIndex: number, toIndex: number) => {
+    set((state) => {
+      const newComponents = [...state.components];
+      const [movedItem] = newComponents.splice(fromIndex, 1);
+      newComponents.splice(toIndex, 0, movedItem);
+      return { components: newComponents };
+    });
+  },
+
+  addComponent: (type: CanvasComponent['type'], index?: number) => {
     let newComponent: CanvasComponent;
 
     // Create a new component with default properties based on its type
@@ -71,9 +82,15 @@ export const useStore = create<StoreState>()((set, get) => ({
         throw new Error(`Unknown component type: ${type}`);
     }
 
-    set((state) => ({
-      components: [...state.components, newComponent],
-    }));
+        set((state) => {
+      const newComponents = [...state.components];
+      if (index !== undefined) {
+        newComponents.splice(index, 0, newComponent);
+      } else {
+        newComponents.push(newComponent);
+      }
+      return { components: newComponents };
+    });
   },
 
   // Sets the currently selected component ID
@@ -81,8 +98,8 @@ export const useStore = create<StoreState>()((set, get) => ({
     set({ activeId: id });
   },
 
-   // Updates the properties of a specific component
-   updateComponent: (id: string, newProps: Partial<CanvasComponent>) => {
+  // Updates the properties of a specific component
+  updateComponent: (id: string, newProps: Partial<CanvasComponent>) => {
     set((state) => ({
       components: state.components.map((component) => {
         if (component.id === id) {
@@ -90,6 +107,13 @@ export const useStore = create<StoreState>()((set, get) => ({
         }
         return component;
       }),
+    }));
+  },
+
+  removeComponent: (id: string) => {
+    set((state) => ({
+      components: state.components.filter((component) => component.id !== id),
+      activeId: state.activeId === id ? null : state.activeId,
     }));
   },
 }));
