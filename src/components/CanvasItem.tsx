@@ -3,13 +3,14 @@ import type { CanvasComponent } from "../store";
 
 interface CanvasItemProps {
   component: CanvasComponent;
+  isDragging?: boolean;
 }
 
-export function CanvasItem({ component }: CanvasItemProps) {
+export function CanvasItem({ component, isDragging = false }: CanvasItemProps) {
   const activeId = useStore((state) => state.activeId);
   const setActiveId = useStore((state) => state.setActiveId);
 
-  const isSelected = activeId === component.id;
+  const isSelected = activeId === component.id && !isDragging;
 
   // Render the actual component based on its type and properties
   const renderContent = () => {
@@ -59,15 +60,26 @@ export function CanvasItem({ component }: CanvasItemProps) {
     }
   };
 
+  const baseClasses = "w-full text-center cursor-pointer bg-white rounded-md shadow-sm transition-all";
+  const typeClasses = {
+    Text: "p-6",
+    Button: "p-4",
+    Image: "p-4",
+  };
+
+  // Note: The hover border is now handled by SortableItem's `group-hover`.
+  // CanvasItem handles its own padding, background, and selection state.
   return (
     <div
       onClick={() => setActiveId(component.id)}
-      className={`cursor-pointer transition-all bg-white ${
-        isSelected
-          ? "ring-2 ring-indigo-600"
-          : "ring-1 ring-transparent hover:ring-slate-300"
-      }`}
+      className={`
+        ${baseClasses} 
+        ${typeClasses[component.type]} 
+        ${isDragging ? 'opacity-50' : ''}
+        ${isSelected ? 'bg-blue-50' : 'bg-white'}
+      `}
       style={{
+        // Inline styles from component properties are still applied
         textAlign: component.align as React.CSSProperties["textAlign"],
       }}
     >

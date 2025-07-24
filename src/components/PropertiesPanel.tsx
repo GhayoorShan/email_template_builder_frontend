@@ -2,6 +2,7 @@ import { useStore } from "../store";
 import { ButtonProperties } from "./forms/ButtonProperties";
 import { ImageProperties } from "./forms/ImageProperties";
 import { TextProperties } from "./forms/TextProperties";
+import { GeneralProperties } from "./forms/GeneralProperties";
 
 export function PropertiesPanel() {
   const components = useStore((state) => state.components);
@@ -12,9 +13,8 @@ export function PropertiesPanel() {
   if (!activeComponent) {
     return (
       <div>
-        <p className="text-sm text-gray-500">
-          Select a component to see its properties.
-        </p>
+        <h3 className="text-lg font-semibold mb-4 text-slate-900">General Settings</h3>
+        <GeneralProperties />
       </div>
     );
   }

@@ -1,66 +1,93 @@
+// src/components/ComponentPanel.tsx
+
+import React from 'react';
 import {
-  BeakerIcon,
   ArrowDownTrayIcon,
-  PhotoIcon,
   CursorArrowRaysIcon,
+  DocumentTextIcon,
+  PhotoIcon,
+  ArrowUturnLeftIcon,
+  ArrowUturnRightIcon,
 } from "@heroicons/react/24/outline";
 import { Draggable } from "./Draggable";
-import { useStore } from "../store";
+import { useStore, type StoreWithTemporal } from '../store';
 import { generateMjml } from "../utils/mjmlGenerator";
 import { compileMjml } from "../api";
+// ---- THE FIX IS HERE ----
+// Ensure 'shallow' is imported from 'zustand/shallow' and not anywhere else.
+import { shallow } from 'zustand/shallow';
 
 export const availableComponents = [
-  { id: "Text", icon: <BeakerIcon className="h-6 w-6 mr-2" /> },
-  { id: "Button", icon: <CursorArrowRaysIcon className="h-6 w-6 mr-2" /> },
-  { id: "Image", icon: <PhotoIcon className="h-6 w-6 mr-2" /> },
+  { id: "Text", name: "Text", icon: <DocumentTextIcon /> },
+  { id: "Button", name: "Button", icon: <CursorArrowRaysIcon /> },
+  { id: "Image", name: "Image", icon: <PhotoIcon /> },
 ];
 
-export function ComponentPanel() {
+const ComponentPanel = () => {
   const components = useStore((state) => state.components);
+  const globalStyles = useStore((state) => state.globalStyles);
+
+  // Using shallow with the correct import will now work
+  const { undo, redo, pastStates, futureStates } = useStore(
+    (state: StoreWithTemporal) => ({
+      undo: state.undo,
+      redo: state.redo,
+      pastStates: state.pastStates,
+      futureStates: state.futureStates,
+    }),
+    shallow
+  );
 
   const handleExportMjml = () => {
-    const mjml = generateMjml(components);
+    const mjml = generateMjml(components, globalStyles);
     console.log(mjml);
-    // In a real app, you might download this as a file or send to an API
   };
 
   const handleDownloadHtml = async () => {
-    // 1. Get the latest state and generate MJML
-    const currentComponents = useStore.getState().components;
-    if (currentComponents.length === 0) {
-      alert("Please add components to the canvas before downloading.");
-      return;
-    }
-    const mjml = generateMjml(currentComponents);
-
-    // 2. POST to the compile endpoint using the new API function
+    const mjml = generateMjml(components, globalStyles);
     try {
       const { html } = await compileMjml(mjml);
-
-      // 3. Create a blob and trigger download
       const blob = new Blob([html], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "template.html";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "email-template.html";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
-      console.error("Download failed:", error);
-      alert("Could not download HTML. See console for details.");
+      console.error("Failed to compile MJML:", error);
     }
   };
 
   return (
-    <>
-      <div className="space-y-2">
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold text-slate-900">Components</h3>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => undo()}
+            disabled={!pastStates || pastStates.length === 0}
+            className="p-1 rounded-md text-slate-600 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Undo"
+          >
+            <ArrowUturnLeftIcon className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => redo()}
+            disabled={!futureStates || futureStates.length === 0}
+            className="p-1 rounded-md text-slate-600 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Redo"
+          >
+            <ArrowUturnRightIcon className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
         {availableComponents.map((comp) => (
           <Draggable key={comp.id} id={comp.id}>
-            <div className="flex items-center p-2 bg-white border border-slate-300 rounded-md shadow-sm cursor-grab active:cursor-grabbing hover:bg-slate-100 transition-colors">
-              {comp.icon}
-              <span className="font-medium">{comp.id}</span>
+            <div className="flex flex-col items-center justify-center p-3 bg-white border border-slate-200 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:bg-slate-50 hover:border-blue-500 transition-all aspect-square">
+              {React.cloneElement(comp.icon, { className: "h-7 w-7 text-slate-600 mb-2" })}
+              <span className="font-medium text-sm text-slate-700">{comp.name}</span>
             </div>
           </Draggable>
         ))}
@@ -81,6 +108,8 @@ export function ComponentPanel() {
           Download HTML
         </button>
       </div>
-    </>
+    </div>
   );
-}
+};
+
+export { ComponentPanel };

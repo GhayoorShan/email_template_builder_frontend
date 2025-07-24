@@ -1,23 +1,62 @@
 import "./App.css";
 import { useState, useEffect } from "react";
-import { DndContext } from "@dnd-kit/core";
-import type { DragEndEvent } from "@dnd-kit/core";
+import { DndContext, DragOverlay, defaultDropAnimation, pointerWithin, useSensor, useSensors, PointerSensor, KeyboardSensor } from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import type { DragEndEvent, DragStartEvent, DragOverEvent } from "@dnd-kit/core";
 import { useStore, type CanvasComponent } from "./store";
 import { useDebounce } from "./hooks/useDebounce";
 import { generateMjml } from "./utils/mjmlGenerator";
 import { ComponentPanel, availableComponents } from "./components/ComponentPanel";
 import { Canvas } from "./components/Canvas";
+import { CanvasItem } from "./components/CanvasItem";
 import { PropertiesPanel } from "./components/PropertiesPanel";
 import { compileMjml } from "./api";
 
 function App() {
-  const { components, addComponent, moveComponent } = useStore();
+  const { components, addComponent, moveComponent, setDropIndicatorId, globalStyles } = useStore();
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeComponent, setActiveComponent] = useState<CanvasComponent | null>(null);
+  
+  // Configure sensors for better touch/pointer handling
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // Require 5px movement before dragging starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    setActiveId(active.id as string);
+    
+    // If dragging an existing component, find and set it
+    const component = components.find(c => c.id === active.id);
+    if (component) {
+      setActiveComponent(component);
+    }
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event;
+    setDropIndicatorId(over ? (over.id as string) : null);
+  };
   const [compiledHtml, setCompiledHtml] = useState(
     "<html><body><p>Preview will appear here.</p></body></html>"
   );
   const debouncedComponents = useDebounce(components, 500);
+  const debouncedGlobalStyles = useDebounce(globalStyles, 500);
 
   function handleDragEnd(event: DragEndEvent) {
+    // Reset drag state
+    setActiveId(null);
+    setActiveComponent(null);
+    setDropIndicatorId(null);
+    
+    if (!event.over) return;
     const { active, over } = event;
 
     if (!over) return;
@@ -59,7 +98,7 @@ function App() {
       return;
     }
 
-    const mjml = generateMjml(debouncedComponents);
+    const mjml = generateMjml(debouncedComponents, debouncedGlobalStyles);
 
     const doCompile = async () => {
       try {
@@ -75,10 +114,27 @@ function App() {
     };
 
     doCompile();
-  }, [debouncedComponents]);
+  }, [debouncedComponents, debouncedGlobalStyles]);
+
+  // Render the drag overlay
+  const renderDragOverlay = () => {
+    if (!activeId || !activeComponent) return null;
+    
+    return (
+      <div className="shadow-xl opacity-90 bg-white border-2 border-blue-400 rounded-md">
+        <CanvasItem component={activeComponent} isDragging />
+      </div>
+    );
+  };
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext 
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+      sensors={sensors}
+      collisionDetection={pointerWithin}
+    >
       <div className="flex flex-row h-screen overflow-hidden bg-slate-100 font-sans text-gray-900">
         {/* Left Sidebar: Fixed width, scrolls internally */}
         <aside className="w-64 flex-shrink-0 overflow-y-auto bg-white p-4 border-r border-gray-200 shadow-md">
@@ -113,6 +169,15 @@ function App() {
           <PropertiesPanel />
         </aside>
       </div>
+      <DragOverlay 
+        dropAnimation={{
+          ...defaultDropAnimation,
+          duration: 200,
+          easing: 'cubic-bezier(0.18, 0.67, 0.6, 0.99)',
+        }}
+      >
+        {renderDragOverlay()}
+      </DragOverlay>
     </DndContext>
   );
 }

@@ -1,11 +1,11 @@
-import type { CanvasComponent } from "../store";
+import type { CanvasComponent, GlobalStyles } from "../store";
 
 /**
  * Generates an MJML string from an array of canvas components.
  * @param components The array of components from the Zustand store.
  * @returns A full MJML string.
  */
-export function generateMjml(components: CanvasComponent[]): string {
+export function generateMjml(components: CanvasComponent[], globalStyles: GlobalStyles): string {
   const componentMjml = components
     .map((component) => {
       let mjml = "";
@@ -48,5 +48,5 @@ export function generateMjml(components: CanvasComponent[]): string {
     .join("\n");
 
   // Wrap the generated components in the MJML boilerplate
-  return `<mjml><mj-body>${componentMjml}</mj-body></mjml>`;
+  return `<mjml><mj-body width="${globalStyles.contentWidth}px" background-color="${globalStyles.backgroundColor}">${componentMjml}</mj-body></mjml>`;
 }
