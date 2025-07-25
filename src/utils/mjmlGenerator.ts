@@ -84,59 +84,56 @@ export function generateMjml(components: CanvasComponent[], globalStyles: Global
       switch (component.type) {
         case "Text":
           mjml = `<mj-text
-            align="${component.align}"
-            color="${component.color}"
-            padding-top="${component.paddingTop}"
-            padding-right="${component.paddingRight}"
-            padding-bottom="${component.paddingBottom}"
-            padding-left="${component.paddingLeft}"
-          >${component.text}</mj-text>`;
+            align="${component.align || 'left'}"
+            color="${component.color || '#000000'}"
+            padding-top="${component.paddingTop || '10px'}"
+            padding-right="${component.paddingRight || '25px'}"
+            padding-bottom="${component.paddingBottom || '10px'}"
+            padding-left="${component.paddingLeft || '25px'}"
+          >${component.text || ''}</mj-text>`;
           break;
 
         case "Button":
           mjml = `<mj-button
-            href="${component.url}"
-            align="${component.align}"
-            background-color="${component.backgroundColor}"
-            color="${component.color}"
-            border-radius="${component.borderRadius}"
-            inner-padding="${component.paddingTop} ${component.paddingRight} ${component.paddingBottom} ${component.paddingLeft}"
-          >${component.buttonText}</mj-button>`;
+            href="${component.url || '#'}"
+            align="${component.align || 'center'}"
+            background-color="${component.backgroundColor || '#000000'}"
+            color="${component.color || '#ffffff'}"
+            border-radius="${component.borderRadius || '3px'}"
+            inner-padding="${component.paddingTop || '10px'} ${component.paddingRight || '25px'} ${component.paddingBottom || '10px'} ${component.paddingLeft || '25px'}"
+          >${component.buttonText || 'Button'}</mj-button>`;
           break;
 
         case "Image":
           mjml = `<mj-image
-            src="${component.src}"
-            align="${component.align}"
+            src="${component.src || ''}"
+            align="${component.align || 'center'}"
+            padding="10px 25px"
           />`;
           break;
           
         case "Section":
-          // For sections, we'll just return the children wrapped in a section
-          // The actual section styling will be handled by the parent component
           mjml = `<mj-section
-            background-color="${component.backgroundColor}"
-            padding="${component.padding}"
-            border="${component.borderWidth} solid ${component.borderColor}"
-            border-radius="${component.borderRadius}"
+            background-color="${component.backgroundColor || '#ffffff'}"
+            padding="${component.padding || '20px 0'}"
+            border="${component.borderWidth || '0'} solid ${component.borderColor || 'transparent'}"
+            border-radius="${component.borderRadius || '0'}"
           >
             <mj-column>
-              ${component.children.map(childId => {
-                const child = components.find(c => c.id === childId);
-                // Recursively generate MJML for child components
-                return child ? generateMjml([child], globalStyles) : '';
-              }).join('')}
+              ${component.children?.map(child => {
+                return generateMjml([child], globalStyles);
+              }).join('') || ''}
             </mj-column>
           </mj-section>`;
           break;
           
         case "Divider":
           mjml = `<mj-divider
-            border-width="${component.borderWidth}"
-            border-style="${component.borderStyle}"
-            border-color="${component.borderColor}"
-            width="${component.width}"
-            padding="${component.padding}"
+            border-width="${component.borderWidth || '1px'}"
+            border-style="${component.borderStyle || 'solid'}"
+            border-color="${component.borderColor || '#000000'}"
+            width="${component.width || '100%'}"
+            padding="${component.padding || '10px 25px'}"
           />`;
           break;
           

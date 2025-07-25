@@ -71,10 +71,9 @@ const CanvasItem: React.FC<CanvasItemProps> = ({ component, isDragging = false, 
         >
           <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="relative">
-            {component.children.map(childId => {
-              const child = components.find(c => c.id === childId);
-              return child ? <CanvasItem key={childId} component={child} /> : null;
-            })}
+          {component.children.map((child: CanvasComponent) => (
+  <CanvasItem key={child.id} component={child} />
+))}
           </div>
         </div>
       );

@@ -76,6 +76,11 @@ export interface StructureComponent extends BaseComponent {
 export interface SectionComponent extends BaseComponent {
   type: 'Section';
   children: CanvasComponent[];
+  backgroundColor?: string;
+  padding?: string;
+  borderWidth?: string;
+  borderColor?: string;
+  borderRadius?: string;
 }
 
 export interface OneColumnComponent extends BaseComponent {
