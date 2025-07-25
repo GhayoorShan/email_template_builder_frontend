@@ -39,7 +39,62 @@ export interface ImageComponent {
   align: string;
 }
 
-export type CanvasComponent = TextComponent | ButtonComponent | ImageComponent;
+export interface SectionComponent {
+  id: string;
+  type: 'Section';
+  backgroundColor: string;
+  padding: string;
+  borderWidth: string;
+  borderColor: string;
+  borderRadius: string;
+  children: string[]; // IDs of child components
+}
+
+export interface DividerComponent {
+  id: string;
+  type: 'Divider';
+  borderStyle: 'solid' | 'dashed' | 'dotted';
+  borderWidth: string;
+  borderColor: string;
+  width: string;
+  padding: string;
+}
+
+export interface SocialMediaComponent {
+  id: string;
+  type: 'SocialMedia';
+  alignment: 'left' | 'center' | 'right';
+  iconSize: string;
+  iconSpacing: string;
+  icons: Array<{
+    platform: 'facebook' | 'twitter' | 'instagram' | 'linkedin' | 'youtube' | 'pinterest' | 'tiktok';
+    url: string;
+    altText: string;
+  }>;
+}
+
+export interface MenuComponent {
+  id: string;
+  type: 'Menu';
+  alignment: 'left' | 'center' | 'right';
+  itemPadding: string;
+  itemSpacing: string;
+  textColor: string;
+  hoverTextColor: string;
+  items: Array<{
+    text: string;
+    url: string;
+  }>;
+}
+
+export type CanvasComponent = 
+  | TextComponent 
+  | ButtonComponent 
+  | ImageComponent
+  | SectionComponent
+  | DividerComponent
+  | SocialMediaComponent
+  | MenuComponent;
 
 export interface GlobalStyles {
   backgroundColor: string;
@@ -181,7 +236,66 @@ export const useStore = create<StoreState>()(
       addComponent: (type, index) => {
         set((state) => {
           let newComponent: CanvasComponent;
+          const id = nanoid();
           switch (type) {
+            case 'Section':
+              newComponent = {
+                id,
+                type: 'Section',
+                backgroundColor: '#ffffff',
+                padding: '20px',
+                borderWidth: '1px',
+                borderColor: '#dddddd',
+                borderRadius: '0',
+                children: []
+              };
+              break;
+              
+            case 'Divider':
+              newComponent = {
+                id,
+                type: 'Divider',
+                borderStyle: 'solid',
+                borderWidth: '1px',
+                borderColor: '#dddddd',
+                width: '100%',
+                padding: '10px 0'
+              };
+              break;
+              
+            case 'SocialMedia':
+              newComponent = {
+                id,
+                type: 'SocialMedia',
+                alignment: 'center',
+                iconSize: '32px',
+                iconSpacing: '15px',
+                icons: [
+                  { platform: 'facebook', url: '#', altText: 'Facebook' },
+                  { platform: 'twitter', url: '#', altText: 'Twitter' },
+                  { platform: 'instagram', url: '#', altText: 'Instagram' }
+                ]
+              };
+              break;
+              
+            case 'Menu':
+              newComponent = {
+                id,
+                type: 'Menu',
+                alignment: 'center',
+                itemPadding: '10px 15px',
+                itemSpacing: '10px',
+                textColor: '#333333',
+                hoverTextColor: '#007bff',
+                items: [
+                  { text: 'Home', url: '#' },
+                  { text: 'Products', url: '#' },
+                  { text: 'About', url: '#' },
+                  { text: 'Contact', url: '#' }
+                ]
+              };
+              break;
+              
             case 'Text':
               newComponent = {
                 id: nanoid(),

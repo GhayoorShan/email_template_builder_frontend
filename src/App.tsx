@@ -8,7 +8,7 @@ import { useDebounce } from "./hooks/useDebounce";
 import { generateMjml } from "./utils/mjmlGenerator";
 import { ComponentPanel, availableComponents } from "./components/ComponentPanel";
 import { Canvas } from "./components/Canvas";
-import { CanvasItem } from "./components/CanvasItem";
+import CanvasItem from "./components/CanvasItem";
 import { PropertiesPanel } from "./components/PropertiesPanel";
 import { compileMjml } from "./api";
 

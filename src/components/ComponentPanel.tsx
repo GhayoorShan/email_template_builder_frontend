@@ -8,6 +8,10 @@ import {
   PhotoIcon,
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
+  RectangleGroupIcon,
+  MinusIcon,
+  ShareIcon,
+  Bars3Icon,
 } from "@heroicons/react/24/outline";
 import { Draggable } from "./Draggable";
 import { useStore } from "../store";
@@ -15,9 +19,13 @@ import { generateMjml } from "../utils/mjmlGenerator";
 import { compileMjml } from "../api";
 
 export const availableComponents = [
-  { id: "Text", name: "Text", icon: <DocumentTextIcon /> },
-  { id: "Button", name: "Button", icon: <CursorArrowRaysIcon /> },
-  { id: "Image", name: "Image", icon: <PhotoIcon /> },
+  { id: "Section", name: "Section", icon: <RectangleGroupIcon className="h-5 w-5" /> },
+  { id: "Text", name: "Text", icon: <DocumentTextIcon className="h-5 w-5" /> },
+  { id: "Button", name: "Button", icon: <CursorArrowRaysIcon className="h-5 w-5" /> },
+  { id: "Image", name: "Image", icon: <PhotoIcon className="h-5 w-5" /> },
+  { id: "Divider", name: "Divider", icon: <MinusIcon className="h-5 w-5" /> },
+  { id: "SocialMedia", name: "Social Media", icon: <ShareIcon className="h-5 w-5" /> },
+  { id: "Menu", name: "Menu", icon: <Bars3Icon className="h-5 w-5" /> },
 ];
 
 const ComponentPanel = () => {

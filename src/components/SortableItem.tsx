@@ -4,7 +4,7 @@ import { DocumentDuplicateIcon } from '@heroicons/react/24/outline';
 import { CSS } from '@dnd-kit/utilities';
 import { useStore } from '../store';
 import type { CanvasComponent } from '../store';
-import { CanvasItem } from './CanvasItem';
+import CanvasItem from './CanvasItem';
 
 interface SortableItemProps {
   id: string;
