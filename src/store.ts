@@ -1,12 +1,16 @@
-// src/store.ts
-
 import { create } from 'zustand';
 import { nanoid } from 'nanoid';
 import { devtools } from 'zustand/middleware';
 
-// Type definitions remain the same
-export interface TextComponent {
+// Base component interface with common properties
+interface BaseComponent {
   id: string;
+  parentId: string | null;
+}
+
+// --- Component Type Definitions ---
+
+export interface TextComponent extends BaseComponent {
   type: 'Text';
   text: string;
   align: string;
@@ -17,8 +21,7 @@ export interface TextComponent {
   color: string;
 }
 
-export interface ButtonComponent {
-  id: string;
+export interface ButtonComponent extends BaseComponent {
   type: 'Button';
   buttonText: string;
   url: string;
@@ -32,36 +35,15 @@ export interface ButtonComponent {
   color: string;
 }
 
-export interface ImageComponent {
-  id: string;
+export interface ImageComponent extends BaseComponent {
   type: 'Image';
   src: string;
   align: string;
 }
 
-export interface SectionComponent {
-  id: string;
-  type: 'Section';
-  backgroundColor: string;
-  padding: string;
-  borderWidth: string;
-  borderColor: string;
-  borderRadius: string;
-  children: string[]; // IDs of child components
-}
+export type DividerComponent = BaseComponent & { type: 'Divider'; borderStyle: 'solid' | 'dashed' | 'dotted'; borderWidth: string; borderColor: string; width: string; padding: string; };
 
-export interface DividerComponent {
-  id: string;
-  type: 'Divider';
-  borderStyle: 'solid' | 'dashed' | 'dotted';
-  borderWidth: string;
-  borderColor: string;
-  width: string;
-  padding: string;
-}
-
-export interface SocialMediaComponent {
-  id: string;
+export interface SocialMediaComponent extends BaseComponent {
   type: 'SocialMedia';
   alignment: 'left' | 'center' | 'right';
   iconSize: string;
@@ -73,8 +55,7 @@ export interface SocialMediaComponent {
   }>;
 }
 
-export interface MenuComponent {
-  id: string;
+export interface MenuComponent extends BaseComponent {
   type: 'Menu';
   alignment: 'left' | 'center' | 'right';
   itemPadding: string;
@@ -87,14 +68,46 @@ export interface MenuComponent {
   }>;
 }
 
-export type CanvasComponent = 
-  | TextComponent 
-  | ButtonComponent 
+export interface StructureComponent extends BaseComponent {
+  type: 'Structure';
+  children: CanvasComponent[];
+}
+
+export interface SectionComponent extends BaseComponent {
+  type: 'Section';
+  children: CanvasComponent[];
+}
+
+export interface OneColumnComponent extends BaseComponent {
+  type: 'OneColumn';
+  children: CanvasComponent[];
+}
+
+export interface TwoColumnComponent extends BaseComponent {
+  type: 'TwoColumn';
+  children: CanvasComponent[];
+}
+
+export interface ColumnComponent extends BaseComponent {
+  type: 'Column';
+  children: CanvasComponent[];
+}
+
+// Union type for all possible canvas components
+export type CanvasComponent =
+  | TextComponent
+  | ButtonComponent
   | ImageComponent
-  | SectionComponent
   | DividerComponent
   | SocialMediaComponent
-  | MenuComponent;
+  | MenuComponent
+  | StructureComponent
+  | ColumnComponent
+  | SectionComponent
+  | OneColumnComponent
+  | TwoColumnComponent;
+
+// --- Global and State Type Definitions ---
 
 export interface GlobalStyles {
   backgroundColor: string;
@@ -107,275 +120,306 @@ interface HistoryState {
 }
 
 export interface StoreState {
-  // Current state
+  modules: CanvasComponent[];
   components: CanvasComponent[];
   activeId: string | null;
   globalStyles: GlobalStyles;
   dropIndicatorId: string | null;
-  
-  // History management
   history: HistoryState[];
   historyIndex: number;
-  
-  // Actions
-  addComponent: (type: CanvasComponent['type'], index?: number) => void;
-  moveComponent: (fromIndex: number, toIndex: number) => void;
-  setActiveId: (id: string | null) => void;
-  updateComponent: (id: string, newProps: Partial<CanvasComponent>) => void;
+  addComponent: (type: CanvasComponent['type'], parentId: string | null, index: number) => void;
+  moveComponent: (componentId: string, targetContainerId: string | null, index: number) => void;
   removeComponent: (id: string) => void;
   duplicateComponent: (id: string) => void;
+  updateComponent: (id: string, newProps: Partial<CanvasComponent>) => void;
+  findComponent: (id: string) => CanvasComponent | null;
+  setActiveId: (id: string | null) => void;
+  saveAsModule: (component: CanvasComponent) => void;
   updateGlobalStyles: (newStyles: Partial<GlobalStyles>) => void;
   setDropIndicatorId: (id: string | null) => void;
-  
-  // Undo/Redo actions
   undo: () => void;
   redo: () => void;
   canUndo: () => boolean;
   canRedo: () => boolean;
-  
-  // Helper to save current state to history
   saveToHistory: () => void;
 }
 
-// Create the store with custom undo/redo logic
+// --- Zustand Store Implementation ---
+
+const findComponent = (components: CanvasComponent[], id: string): CanvasComponent | null => {
+  for (const component of components) {
+    if (component.id === id) return component;
+    if ('children' in component && Array.isArray(component.children)) {
+      const found = findComponent(component.children as CanvasComponent[], id);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
+const findParent = (components: CanvasComponent[], id: string): (CanvasComponent & { children: CanvasComponent[] }) | null => {
+  for (const component of components) {
+    if ('children' in component && Array.isArray(component.children)) {
+      if ((component.children as CanvasComponent[]).some(child => child.id === id)) {
+        return component as CanvasComponent & { children: CanvasComponent[] };
+      }
+      const found = findParent(component.children as CanvasComponent[], id);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
+const removeComponentFromParent = (components: CanvasComponent[], id: string): CanvasComponent[] => {
+  return components.filter(c => c.id !== id).map(c => {
+    if ('children' in c && Array.isArray(c.children)) {
+      (c as any).children = removeComponentFromParent(c.children as CanvasComponent[], id);
+    }
+    return c;
+  });
+};
+
+const addComponentToParent = (components: CanvasComponent[], componentToAdd: CanvasComponent, parentId: string | null, index: number): CanvasComponent[] => {
+  if (parentId === null) {
+    const newComponents = [...components];
+    newComponents.splice(index, 0, componentToAdd);
+    return newComponents;
+  }
+
+  return components.map(c => {
+    if (c.id === parentId) {
+      const container = c as any;
+      const newChildren = [...(container.children || [])];
+      newChildren.splice(index, 0, componentToAdd);
+      container.children = newChildren;
+    }
+    else if ('children' in c && Array.isArray(c.children)) {
+      (c as any).children = addComponentToParent(c.children as CanvasComponent[], componentToAdd, parentId, index);
+    }
+    return c;
+  });
+};
+
 export const useStore = create<StoreState>()(
   devtools(
     (set, get) => ({
       // Initial state
       components: [],
+      modules: [],
       activeId: null,
       dropIndicatorId: null,
       globalStyles: {
-        backgroundColor: '#ffffff',
+        backgroundColor: '#f1f1f1',
         contentWidth: 600,
       },
-      
-      // History management
       history: [{
         components: [],
         globalStyles: {
-          backgroundColor: '#ffffff',
+          backgroundColor: '#f1f1f1',
           contentWidth: 600,
         }
       }],
       historyIndex: 0,
-      
-      // Helper function to save current state to history
+
+      findComponent: (id) => {
+        return findComponent(get().components, id);
+      },
+
+      // --- History Management ---
       saveToHistory: () => {
-        const state = get();
-        const newHistoryState: HistoryState = {
-          components: JSON.parse(JSON.stringify(state.components)),
-          globalStyles: JSON.parse(JSON.stringify(state.globalStyles)),
-        };
-        
-        // Remove any history after current index
-        const newHistory = state.history.slice(0, state.historyIndex + 1);
-        newHistory.push(newHistoryState);
-        
-        // Limit history to 50 items
-        if (newHistory.length > 50) {
-          newHistory.shift();
-        }
-        
-        set({
-          history: newHistory,
-          historyIndex: newHistory.length - 1,
+        set(state => {
+          const newHistory = state.history.slice(0, state.historyIndex + 1);
+          const currentSnapshot = { 
+            components: state.components, 
+            globalStyles: state.globalStyles 
+          };
+          // Avoid saving duplicate states
+          if (JSON.stringify(newHistory[newHistory.length - 1]) === JSON.stringify(currentSnapshot)) {
+            return {};
+          }
+          newHistory.push(currentSnapshot);
+          return {
+            history: newHistory,
+            historyIndex: newHistory.length - 1,
+          };
         });
       },
-      
-      // Undo/Redo implementation
+
       undo: () => {
-        const state = get();
-        if (state.historyIndex > 0) {
-          const newIndex = state.historyIndex - 1;
-          const historyState = state.history[newIndex];
-          set({
-            components: JSON.parse(JSON.stringify(historyState.components)),
-            globalStyles: JSON.parse(JSON.stringify(historyState.globalStyles)),
-            historyIndex: newIndex,
-            activeId: null,
-          });
-        }
-      },
-      
-      redo: () => {
-        const state = get();
-        if (state.historyIndex < state.history.length - 1) {
-          const newIndex = state.historyIndex + 1;
-          const historyState = state.history[newIndex];
-          set({
-            components: JSON.parse(JSON.stringify(historyState.components)),
-            globalStyles: JSON.parse(JSON.stringify(historyState.globalStyles)),
-            historyIndex: newIndex,
-            activeId: null,
-          });
-        }
-      },
-      
-      canUndo: () => {
-        const state = get();
-        return state.historyIndex > 0;
-      },
-      
-      canRedo: () => {
-        const state = get();
-        return state.historyIndex < state.history.length - 1;
-      },
-      
-      // Actions with history tracking
-      moveComponent: (fromIndex, toIndex) => {
         set((state) => {
-          const newComponents = [...state.components];
-          const [movedItem] = newComponents.splice(fromIndex, 1);
-          newComponents.splice(toIndex, 0, movedItem);
+          if (state.historyIndex > 0) {
+            const newIndex = state.historyIndex - 1;
+            const previousState = state.history[newIndex];
+            return {
+              components: JSON.parse(JSON.stringify(previousState.components)),
+              globalStyles: previousState.globalStyles,
+              historyIndex: newIndex,
+            };
+          }
+          return {};
+        });
+      },
+
+      redo: () => {
+        set((state) => {
+          if (state.historyIndex < state.history.length - 1) {
+            const newIndex = state.historyIndex + 1;
+            const nextState = state.history[newIndex];
+            return {
+              components: JSON.parse(JSON.stringify(nextState.components)),
+              globalStyles: nextState.globalStyles,
+              historyIndex: newIndex,
+            };
+          }
+          return {};
+        });
+      },
+
+      canUndo: () => get().historyIndex > 0,
+      canRedo: () => get().historyIndex < get().history.length - 1,
+
+      // --- Component Actions ---
+      moveComponent: (componentId, targetContainerId, index) => {
+        set(state => {
+          const components = [...state.components];
+          const componentToMove = findComponent(components, componentId);
+          if (!componentToMove) return state;
+
+          // 1. Remove from old parent
+          const componentsWithoutMoved = removeComponentFromParent(components, componentId);
+          
+          // 2. Add to new parent
+          const newComponents = addComponentToParent(
+            componentsWithoutMoved,
+            componentToMove,
+            targetContainerId,
+            index
+          );
+
           return { components: newComponents };
         });
         get().saveToHistory();
       },
-      
-      addComponent: (type, index) => {
+
+      addComponent: (type, parentId, index) => {
         set((state) => {
           let newComponent: CanvasComponent;
           const id = nanoid();
+
           switch (type) {
-            case 'Section':
-              newComponent = {
-                id,
-                type: 'Section',
-                backgroundColor: '#ffffff',
-                padding: '20px',
-                borderWidth: '1px',
-                borderColor: '#dddddd',
-                borderRadius: '0',
-                children: []
-              };
-              break;
-              
-            case 'Divider':
-              newComponent = {
-                id,
-                type: 'Divider',
-                borderStyle: 'solid',
-                borderWidth: '1px',
-                borderColor: '#dddddd',
-                width: '100%',
-                padding: '10px 0'
-              };
-              break;
-              
-            case 'SocialMedia':
-              newComponent = {
-                id,
-                type: 'SocialMedia',
-                alignment: 'center',
-                iconSize: '32px',
-                iconSpacing: '15px',
-                icons: [
-                  { platform: 'facebook', url: '#', altText: 'Facebook' },
-                  { platform: 'twitter', url: '#', altText: 'Twitter' },
-                  { platform: 'instagram', url: '#', altText: 'Instagram' }
-                ]
-              };
-              break;
-              
-            case 'Menu':
-              newComponent = {
-                id,
-                type: 'Menu',
-                alignment: 'center',
-                itemPadding: '10px 15px',
-                itemSpacing: '10px',
-                textColor: '#333333',
-                hoverTextColor: '#007bff',
-                items: [
-                  { text: 'Home', url: '#' },
-                  { text: 'Products', url: '#' },
-                  { text: 'About', url: '#' },
-                  { text: 'Contact', url: '#' }
-                ]
-              };
-              break;
-              
             case 'Text':
               newComponent = {
-                id: nanoid(),
-                type: 'Text',
-                text: 'Editable Text Block',
-                align: 'left',
-                paddingTop: '10px',
-                paddingRight: '10px',
-                paddingBottom: '10px',
-                paddingLeft: '10px',
-                color: 'black'
+                id, parentId, type, text: 'Editable Text Block', align: 'left',
+                paddingTop: '10px', paddingRight: '10px', paddingBottom: '10px', paddingLeft: '10px', color: '#000000',
               };
               break;
             case 'Button':
               newComponent = {
-                id: nanoid(),
-                type: 'Button',
-                buttonText: 'Click Me',
-                url: '#',
-                align: 'center',
-                paddingTop: '10px',
-                paddingRight: '25px',
-                paddingBottom: '10px',
-                paddingLeft: '25px',
-                backgroundColor: '#4CAF50',
-                borderRadius: '5px',
-                color: '#ffffff'
+                id, parentId, type, buttonText: 'Click Me', url: '#', align: 'center',
+                paddingTop: '10px', paddingRight: '10px', paddingBottom: '10px', paddingLeft: '10px',
+                backgroundColor: '#007bff', borderRadius: '5px', color: '#ffffff',
               };
               break;
             case 'Image':
               newComponent = {
-                id: nanoid(),
-                type: 'Image',
-                src: 'https://via.placeholder.com/150',
-                align: 'left'
+                id, parentId, type, src: 'https://via.placeholder.com/600x200', align: 'center',
               };
+              break;
+            case 'Section':
+              newComponent = { id, parentId, type, children: [] };
+              break;
+            case 'OneColumn':
+              newComponent = { id, parentId, type, children: [] };
+              break;
+            case 'TwoColumn':
+              newComponent = { id, parentId, type, children: [] };
+              break;
+            case 'Divider':
+              newComponent = {
+                id, parentId, type, borderStyle: 'solid', borderWidth: '1px',
+                borderColor: '#cccccc', width: '100%', padding: '10px 0',
+              };
+              break;
+            case 'SocialMedia':
+              newComponent = {
+                id, parentId, type, alignment: 'center', iconSize: '32px', iconSpacing: '10px',
+                icons: [
+                  { platform: 'facebook', url: '#', altText: 'Facebook' },
+                  { platform: 'twitter', url: '#', altText: 'Twitter' },
+                  { platform: 'instagram', url: '#', altText: 'Instagram' },
+                ],
+              };
+              break;
+            case 'Menu':
+              newComponent = {
+                id, parentId, type, alignment: 'center', itemPadding: '10px', itemSpacing: '20px',
+                textColor: '#000000', hoverTextColor: '#007bff',
+                items: [
+                  { text: 'Home', url: '#' },
+                  { text: 'About', url: '#' },
+                  { text: 'Contact', url: '#' },
+                ],
+              };
+              break;
+            case 'Structure':
+              newComponent = { id, parentId, type, children: [] };
+              break;
+            case 'Column':
+              newComponent = { id, parentId, type, children: [] };
               break;
             default:
               throw new Error(`Unknown component type: ${type}`);
           }
-          const newComponents = [...state.components];
-          if (index !== undefined) {
-            newComponents.splice(index, 0, newComponent);
-          } else {
-            newComponents.push(newComponent);
-          }
+
+          const newComponents = addComponentToParent(
+            state.components,
+            newComponent,
+            parentId,
+            index
+          );
+
           return { components: newComponents };
         });
         get().saveToHistory();
       },
-      
+
       setActiveId: (id) => set({ activeId: id }),
+
+    saveAsModule: (component) => {
+      const newModule = {
+        ...JSON.parse(JSON.stringify(component)), // Deep copy
+        id: `module-${Date.now()}`,
+      };
+      set((state) => ({ modules: [...state.modules, newModule] }));
+    },
       setDropIndicatorId: (id) => set({ dropIndicatorId: id }),
-      
+
       updateComponent: (id, newProps) => {
         set((state) => ({
-          components: state.components.map((component) => {
-            if (component.id !== id) return component;
-            // Cast the result of spreading a union type back to CanvasComponent.
-            return { ...component, ...newProps } as CanvasComponent;
-          }),
+          components: state.components.map((component) =>
+            component.id === id
+              ? ({ ...component, ...newProps } as CanvasComponent)
+              : component
+          ),
         }));
         get().saveToHistory();
       },
-      
+
       removeComponent: (id) => {
-        set((state) => ({
-          components: state.components.filter((component) => component.id !== id),
-          activeId: state.activeId === id ? null : state.activeId,
-        }));
+        set((state) => {
+          const newComponents = removeComponentFromParent(state.components, id);
+          return {
+            components: newComponents,
+            activeId: state.activeId === id ? null : state.activeId,
+          };
+        });
         get().saveToHistory();
       },
-      
-      duplicateComponent: (id) => {
+
+      duplicateComponent: (id: string) => {
         set((state) => {
           const componentToDuplicate = state.components.find((c) => c.id === id);
           if (!componentToDuplicate) return state;
-          // When spreading a union type like CanvasComponent, TypeScript creates a new,
-          // less specific object type that combines all possible properties.
-          // We must cast it back to CanvasComponent to ensure type compatibility.
           const newComponent = { ...componentToDuplicate, id: nanoid() } as CanvasComponent;
           const index = state.components.findIndex((c) => c.id === id);
           const newComponents = [...state.components];
@@ -384,7 +428,7 @@ export const useStore = create<StoreState>()(
         });
         get().saveToHistory();
       },
-      
+
       updateGlobalStyles: (newStyles) => {
         set((state) => ({
           globalStyles: { ...state.globalStyles, ...newStyles },

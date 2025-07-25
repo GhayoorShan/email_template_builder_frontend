@@ -1,4 +1,5 @@
 import { useStore } from "../store";
+import { useShallow } from 'zustand/react/shallow';
 import { ButtonProperties } from "./forms/ButtonProperties";
 import { ImageProperties } from "./forms/ImageProperties";
 import { TextProperties } from "./forms/TextProperties";
@@ -9,10 +10,17 @@ import { SocialMediaProperties } from "./forms/SocialMediaProperties";
 import { MenuProperties } from "./forms/MenuProperties";
 
 export function PropertiesPanel() {
-  const components = useStore((state) => state.components);
-  const activeId = useStore((state) => state.activeId);
-
-  const activeComponent = components.find((c) => c.id === activeId);
+    const {
+    activeComponent,
+    updateComponent,
+    saveAsModule,
+  } = useStore(
+    useShallow((state) => ({
+      activeComponent: state.components.find((c) => c.id === state.activeId),
+      updateComponent: state.updateComponent,
+      saveAsModule: state.saveAsModule,
+    }))
+  );
 
   if (!activeComponent) {
     return (
@@ -26,7 +34,7 @@ export function PropertiesPanel() {
   const renderPropertiesForm = () => {
     const commonProps = {
       onUpdate: (updates: any) => {
-        useStore.getState().updateComponent(activeComponent.id, updates);
+        updateComponent(activeComponent.id, updates);
       },
     };
 
@@ -60,6 +68,19 @@ export function PropertiesPanel() {
         Editing: {activeComponent.type}
       </h3>
       {renderPropertiesForm()}
+      <div className="mt-6">
+        <button
+          onClick={() => {
+            if (activeComponent) {
+              saveAsModule(activeComponent);
+              alert(`${activeComponent.type} saved as a module!`);
+            }
+          }}
+          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          Save as Module
+        </button>
+      </div>
     </div>
   );
 }
