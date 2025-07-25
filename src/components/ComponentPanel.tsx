@@ -1,6 +1,6 @@
 // src/components/ComponentPanel.tsx
 
-import React from 'react';
+import React from "react";
 import {
   ArrowDownTrayIcon,
   CursorArrowRaysIcon,
@@ -10,12 +10,9 @@ import {
   ArrowUturnRightIcon,
 } from "@heroicons/react/24/outline";
 import { Draggable } from "./Draggable";
-import { useStore, type StoreWithTemporal } from '../store';
+import { useStore } from "../store";
 import { generateMjml } from "../utils/mjmlGenerator";
 import { compileMjml } from "../api";
-// ---- THE FIX IS HERE ----
-// Ensure 'shallow' is imported from 'zustand/shallow' and not anywhere else.
-import { shallow } from 'zustand/shallow';
 
 export const availableComponents = [
   { id: "Text", name: "Text", icon: <DocumentTextIcon /> },
@@ -27,16 +24,11 @@ const ComponentPanel = () => {
   const components = useStore((state) => state.components);
   const globalStyles = useStore((state) => state.globalStyles);
 
-  // Using shallow with the correct import will now work
-  const { undo, redo, pastStates, futureStates } = useStore(
-    (state: StoreWithTemporal) => ({
-      undo: state.undo,
-      redo: state.redo,
-      pastStates: state.pastStates,
-      futureStates: state.futureStates,
-    }),
-    shallow
-  );
+  // Use the store methods directly
+  const undo = useStore((state) => state.undo);
+  const redo = useStore((state) => state.redo);
+  const canUndo = useStore((state) => state.canUndo);
+  const canRedo = useStore((state) => state.canRedo);
 
   const handleExportMjml = () => {
     const mjml = generateMjml(components, globalStyles);
@@ -65,16 +57,16 @@ const ComponentPanel = () => {
         <h3 className="text-lg font-semibold text-slate-900">Components</h3>
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => undo()}
-            disabled={!pastStates || pastStates.length === 0}
+            onClick={undo}
+            disabled={!canUndo()}
             className="p-1 rounded-md text-slate-600 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Undo"
           >
             <ArrowUturnLeftIcon className="h-5 w-5" />
           </button>
           <button
-            onClick={() => redo()}
-            disabled={!futureStates || futureStates.length === 0}
+            onClick={redo}
+            disabled={!canRedo()}
             className="p-1 rounded-md text-slate-600 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Redo"
           >
@@ -86,8 +78,12 @@ const ComponentPanel = () => {
         {availableComponents.map((comp) => (
           <Draggable key={comp.id} id={comp.id}>
             <div className="flex flex-col items-center justify-center p-3 bg-white border border-slate-200 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:bg-slate-50 hover:border-blue-500 transition-all aspect-square">
-              {React.cloneElement(comp.icon, { className: "h-7 w-7 text-slate-600 mb-2" })}
-              <span className="font-medium text-sm text-slate-700">{comp.name}</span>
+              {React.cloneElement(comp.icon, {
+                className: "h-7 w-7 text-slate-600 mb-2",
+              })}
+              <span className="font-medium text-sm text-slate-700">
+                {comp.name}
+              </span>
             </div>
           </Draggable>
         ))}

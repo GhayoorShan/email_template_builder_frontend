@@ -1,11 +1,10 @@
 // src/store.ts
 
-import { create, type StateCreator } from 'zustand'; // <-- IMPORT StateCreator
-import { temporal, type TemporalState } from 'zundo';
+import { create } from 'zustand';
 import { nanoid } from 'nanoid';
-import { devtools } from 'zustand/middleware'; // Optional: useful for debugging
+import { devtools } from 'zustand/middleware';
 
-// Your type definitions are perfect, no changes needed here
+// Type definitions remain the same
 export interface TextComponent {
   id: string;
   type: 'Text';
@@ -47,10 +46,23 @@ export interface GlobalStyles {
   contentWidth: number;
 }
 
+interface HistoryState {
+  components: CanvasComponent[];
+  globalStyles: GlobalStyles;
+}
+
 export interface StoreState {
+  // Current state
   components: CanvasComponent[];
   activeId: string | null;
   globalStyles: GlobalStyles;
+  dropIndicatorId: string | null;
+  
+  // History management
+  history: HistoryState[];
+  historyIndex: number;
+  
+  // Actions
   addComponent: (type: CanvasComponent['type'], index?: number) => void;
   moveComponent: (fromIndex: number, toIndex: number) => void;
   setActiveId: (id: string | null) => void;
@@ -58,115 +70,213 @@ export interface StoreState {
   removeComponent: (id: string) => void;
   duplicateComponent: (id: string) => void;
   updateGlobalStyles: (newStyles: Partial<GlobalStyles>) => void;
-  dropIndicatorId: string | null;
   setDropIndicatorId: (id: string | null) => void;
+  
+  // Undo/Redo actions
+  undo: () => void;
+  redo: () => void;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
+  
+  // Helper to save current state to history
+  saveToHistory: () => void;
 }
 
-// Combine your state with the temporal state for the final store type
-type PartializeState = Pick<StoreState, 'components' | 'globalStyles'>;
-export type StoreWithTemporal = StoreState & TemporalState<PartializeState>;
-
-
-// ---- THE FIX IS HERE ----
-// Use StateCreator to correctly type the implementation function.
-// It clearly defines that this function only works with the base StoreState.
-const storeImplementation: StateCreator<StoreState> = (set) => ({
-  components: [],
-  activeId: null,
-  dropIndicatorId: null,
-  globalStyles: {
-    backgroundColor: '#ffffff',
-    contentWidth: 600,
-  },
-  moveComponent: (fromIndex, toIndex) => {
-    set((state) => {
-      const newComponents = [...state.components];
-      const [movedItem] = newComponents.splice(fromIndex, 1);
-      newComponents.splice(toIndex, 0, movedItem);
-      return { components: newComponents };
-    });
-  },
-  addComponent: (type, index) => {
-    set((state) => {
-      let newComponent: CanvasComponent;
-      switch (type) {
-        case 'Text':
-          newComponent = { id: nanoid(), type: 'Text', text: 'Editable Text Block', align: 'left', paddingTop: '10px', paddingRight: '10px', paddingBottom: '10px', paddingLeft: '10px', color: 'black' };
-          break;
-        case 'Button':
-          newComponent = { id: nanoid(), type: 'Button', buttonText: 'Click Me', url: '#', align: 'center', paddingTop: '10px', paddingRight: '25px', paddingBottom: '10px', paddingLeft: '25px', backgroundColor: '#4CAF50', borderRadius: '5px', color: '#ffffff' };
-          break;
-        case 'Image':
-          newComponent = { id: nanoid(), type: 'Image', src: 'https://via.placeholder.com/150', align: 'left' };
-          break;
-        default:
-          throw new Error(`Unknown component type: ${type}`);
-      }
-      const newComponents = [...state.components];
-      if (index !== undefined) {
-        newComponents.splice(index, 0, newComponent);
-      } else {
-        newComponents.push(newComponent);
-      }
-      return { components: newComponents };
-    });
-  },
-  setActiveId: (id) => set({ activeId: id }),
-  setDropIndicatorId: (id) => set({ dropIndicatorId: id }),
-  updateComponent: (id, newProps) => {
-    set((state) => ({
-      components: state.components.map((component) =>
-        component.id === id ? { ...component, ...newProps } : component
-      ),
-    }));
-  },
-  removeComponent: (id) => {
-    set((state) => ({
-      components: state.components.filter((component) => component.id !== id),
-      activeId: state.activeId === id ? null : state.activeId,
-    }));
-  },
-  duplicateComponent: (id) => {
-    set((state) => {
-      const componentToDuplicate = state.components.find((c) => c.id === id);
-      if (!componentToDuplicate) return state;
-      const newComponent = { ...componentToDuplicate, id: nanoid() };
-      const index = state.components.findIndex((c) => c.id === id);
-      const newComponents = [...state.components];
-      newComponents.splice(index + 1, 0, newComponent);
-      return { components: newComponents };
-    });
-  },
-  updateGlobalStyles: (newStyles) => {
-    set((state) => ({
-      globalStyles: { ...state.globalStyles, ...newStyles },
-    }));
-  },
-});
-
-// Create the store with temporal middleware.
-// The types now line up correctly.
-// Create the store with temporal middleware
-export const useStore = create<StoreWithTemporal>()(
+// Create the store with custom undo/redo logic
+export const useStore = create<StoreState>()(
   devtools(
-    temporal(
-      (set, get) => ({
-        // Your store implementation here
+    (set, get) => ({
+      // Initial state
+      components: [],
+      activeId: null,
+      dropIndicatorId: null,
+      globalStyles: {
+        backgroundColor: '#ffffff',
+        contentWidth: 600,
+      },
+      
+      // History management
+      history: [{
         components: [],
-        activeId: null,
         globalStyles: {
           backgroundColor: '#ffffff',
           contentWidth: 600,
-        },
-        // ... rest of your store methods
-      } as unknown as StoreState), // Cast to StoreState to avoid circular type references
-      {
-        partialize: (state) => ({
-          components: state.components,
-          globalStyles: state.globalStyles,
-        }),
-        limit: 50,
-      }
-    )
+        }
+      }],
+      historyIndex: 0,
+      
+      // Helper function to save current state to history
+      saveToHistory: () => {
+        const state = get();
+        const newHistoryState: HistoryState = {
+          components: JSON.parse(JSON.stringify(state.components)),
+          globalStyles: JSON.parse(JSON.stringify(state.globalStyles)),
+        };
+        
+        // Remove any history after current index
+        const newHistory = state.history.slice(0, state.historyIndex + 1);
+        newHistory.push(newHistoryState);
+        
+        // Limit history to 50 items
+        if (newHistory.length > 50) {
+          newHistory.shift();
+        }
+        
+        set({
+          history: newHistory,
+          historyIndex: newHistory.length - 1,
+        });
+      },
+      
+      // Undo/Redo implementation
+      undo: () => {
+        const state = get();
+        if (state.historyIndex > 0) {
+          const newIndex = state.historyIndex - 1;
+          const historyState = state.history[newIndex];
+          set({
+            components: JSON.parse(JSON.stringify(historyState.components)),
+            globalStyles: JSON.parse(JSON.stringify(historyState.globalStyles)),
+            historyIndex: newIndex,
+            activeId: null,
+          });
+        }
+      },
+      
+      redo: () => {
+        const state = get();
+        if (state.historyIndex < state.history.length - 1) {
+          const newIndex = state.historyIndex + 1;
+          const historyState = state.history[newIndex];
+          set({
+            components: JSON.parse(JSON.stringify(historyState.components)),
+            globalStyles: JSON.parse(JSON.stringify(historyState.globalStyles)),
+            historyIndex: newIndex,
+            activeId: null,
+          });
+        }
+      },
+      
+      canUndo: () => {
+        const state = get();
+        return state.historyIndex > 0;
+      },
+      
+      canRedo: () => {
+        const state = get();
+        return state.historyIndex < state.history.length - 1;
+      },
+      
+      // Actions with history tracking
+      moveComponent: (fromIndex, toIndex) => {
+        set((state) => {
+          const newComponents = [...state.components];
+          const [movedItem] = newComponents.splice(fromIndex, 1);
+          newComponents.splice(toIndex, 0, movedItem);
+          return { components: newComponents };
+        });
+        get().saveToHistory();
+      },
+      
+      addComponent: (type, index) => {
+        set((state) => {
+          let newComponent: CanvasComponent;
+          switch (type) {
+            case 'Text':
+              newComponent = {
+                id: nanoid(),
+                type: 'Text',
+                text: 'Editable Text Block',
+                align: 'left',
+                paddingTop: '10px',
+                paddingRight: '10px',
+                paddingBottom: '10px',
+                paddingLeft: '10px',
+                color: 'black'
+              };
+              break;
+            case 'Button':
+              newComponent = {
+                id: nanoid(),
+                type: 'Button',
+                buttonText: 'Click Me',
+                url: '#',
+                align: 'center',
+                paddingTop: '10px',
+                paddingRight: '25px',
+                paddingBottom: '10px',
+                paddingLeft: '25px',
+                backgroundColor: '#4CAF50',
+                borderRadius: '5px',
+                color: '#ffffff'
+              };
+              break;
+            case 'Image':
+              newComponent = {
+                id: nanoid(),
+                type: 'Image',
+                src: 'https://via.placeholder.com/150',
+                align: 'left'
+              };
+              break;
+            default:
+              throw new Error(`Unknown component type: ${type}`);
+          }
+          const newComponents = [...state.components];
+          if (index !== undefined) {
+            newComponents.splice(index, 0, newComponent);
+          } else {
+            newComponents.push(newComponent);
+          }
+          return { components: newComponents };
+        });
+        get().saveToHistory();
+      },
+      
+      setActiveId: (id) => set({ activeId: id }),
+      setDropIndicatorId: (id) => set({ dropIndicatorId: id }),
+      
+      updateComponent: (id, newProps) => {
+        set((state) => ({
+          components: state.components.map((component) => {
+            if (component.id !== id) return component;
+            // Cast the result of spreading a union type back to CanvasComponent.
+            return { ...component, ...newProps } as CanvasComponent;
+          }),
+        }));
+        get().saveToHistory();
+      },
+      
+      removeComponent: (id) => {
+        set((state) => ({
+          components: state.components.filter((component) => component.id !== id),
+          activeId: state.activeId === id ? null : state.activeId,
+        }));
+        get().saveToHistory();
+      },
+      
+      duplicateComponent: (id) => {
+        set((state) => {
+          const componentToDuplicate = state.components.find((c) => c.id === id);
+          if (!componentToDuplicate) return state;
+          // When spreading a union type like CanvasComponent, TypeScript creates a new,
+          // less specific object type that combines all possible properties.
+          // We must cast it back to CanvasComponent to ensure type compatibility.
+          const newComponent = { ...componentToDuplicate, id: nanoid() } as CanvasComponent;
+          const index = state.components.findIndex((c) => c.id === id);
+          const newComponents = [...state.components];
+          newComponents.splice(index + 1, 0, newComponent);
+          return { components: newComponents };
+        });
+        get().saveToHistory();
+      },
+      
+      updateGlobalStyles: (newStyles) => {
+        set((state) => ({
+          globalStyles: { ...state.globalStyles, ...newStyles },
+        }));
+        get().saveToHistory();
+      },
+    })
   )
 );
