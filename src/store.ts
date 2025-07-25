@@ -98,6 +98,15 @@ export interface ColumnComponent extends BaseComponent {
   children: CanvasComponent[];
 }
 
+export interface HeadingComponent extends BaseComponent {
+  type: 'Heading';
+  text: string;
+  level: 1 | 2 | 3 | 4 | 5 | 6;
+  align: string;
+  color: string;
+  padding?: string;
+}
+
 // Union type for all possible canvas components
 export type CanvasComponent =
   | TextComponent
@@ -107,10 +116,11 @@ export type CanvasComponent =
   | SocialMediaComponent
   | MenuComponent
   | StructureComponent
-  | ColumnComponent
   | SectionComponent
   | OneColumnComponent
-  | TwoColumnComponent;
+  | TwoColumnComponent
+  | ColumnComponent
+  | HeadingComponent;
 
 // --- Global and State Type Definitions ---
 
@@ -185,23 +195,52 @@ const removeComponentFromParent = (components: CanvasComponent[], id: string): C
 };
 
 const addComponentToParent = (components: CanvasComponent[], componentToAdd: CanvasComponent, parentId: string | null, index: number): CanvasComponent[] => {
+  // Create a deep copy of the component to add to ensure we don't have reference issues
+  const newComponent = JSON.parse(JSON.stringify(componentToAdd));
+  
+  // Update the parentId of the component being added
+  newComponent.parentId = parentId;
+
   if (parentId === null) {
+    // If no parent, add to root level
     const newComponents = [...components];
-    newComponents.splice(index, 0, componentToAdd);
+    newComponents.splice(index, 0, newComponent);
     return newComponents;
   }
 
-  return components.map(c => {
-    if (c.id === parentId) {
-      const container = c as any;
-      const newChildren = [...(container.children || [])];
-      newChildren.splice(index, 0, componentToAdd);
-      container.children = newChildren;
+  // Find the parent component and add the new component as a child
+  return components.map(component => {
+    if (component.id === parentId) {
+      // This is the parent component
+      const parent = { ...component } as any;
+      
+      // Initialize children array if it doesn't exist
+      if (!parent.children) {
+        parent.children = [];
+      }
+      
+      // Create a new children array with the new component inserted at the specified index
+      const newChildren = [...parent.children];
+      const insertIndex = Math.min(index, newChildren.length);
+      newChildren.splice(insertIndex, 0, newComponent);
+      
+      // Return a new parent with the updated children
+      return {
+        ...parent,
+        children: newChildren
+      };
+    } 
+    
+    // If this component has children, recursively process them
+    if ('children' in component && Array.isArray(component.children)) {
+      return {
+        ...component,
+        children: addComponentToParent(component.children as CanvasComponent[], newComponent, parentId, index)
+      };
     }
-    else if ('children' in c && Array.isArray(c.children)) {
-      (c as any).children = addComponentToParent(c.children as CanvasComponent[], componentToAdd, parentId, index);
-    }
-    return c;
+    
+    // Return unmodified component if it's not the parent and doesn't have children
+    return component;
   });
 };
 
@@ -371,6 +410,11 @@ export const useStore = create<StoreState>()(
               break;
             case 'Column':
               newComponent = { id, parentId, type, children: [] };
+              break;
+            case 'Heading':
+              newComponent = {
+                id, parentId, type, text: 'Heading', level: 1, align: 'left', color: '#000000',
+              };
               break;
             default:
               throw new Error(`Unknown component type: ${type}`);
