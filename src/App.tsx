@@ -26,7 +26,6 @@ function App() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [isRightSidebarOpen] = useState(true);
   const [compiledHtml, setCompiledHtml] = useState('');
 
   const sensors = useSensors(
@@ -145,11 +144,7 @@ function App() {
           </main>
         </div>
 
-        {isRightSidebarOpen && (
-          <div className="w-80 bg-white border-l border-slate-200 p-4 overflow-y-auto">
-            <PropertiesPanel />
-          </div>
-        )}
+        <PropertiesPanel />
 
         <PreviewModal 
           isOpen={isPreviewOpen} 

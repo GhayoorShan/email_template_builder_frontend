@@ -32,15 +32,6 @@ interface FlyoutPanelProps {
   onClose: () => void;
 }
 
-const categoryTitles: { [key: string]: string } = {
-  content: 'Content Blocks',
-  structure: 'Layout Structures',
-  media: 'Media Elements',
-  navigation: 'Navigation Menus',
-  social: 'Social Media Links',
-  dividers: 'Dividers & Spacers',
-};
-
 const tabs = [
   { key: 'structure', icon: <SectionIcon />, label: 'Layouts' },
   { key: 'content', icon: <OneColumnIcon />, label: 'Content' },

@@ -9,12 +9,12 @@ import { SectionProperties } from "./forms/SectionProperties";
 import { DividerProperties } from "./forms/DividerProperties";
 import { SocialMediaProperties } from "./forms/SocialMediaProperties";
 import { MenuProperties } from "./forms/MenuProperties";
+import { StyledPropertiesPanel } from "./ui/PropertiesPanel";
 
 export function PropertiesPanel() {
-    const {
+  const {
     activeComponent,
     updateComponent,
-    saveAsModule,
   } = useStore(
     useShallow((state) => ({
       activeComponent: state.activeId ? state.findComponent(state.activeId) : undefined,
@@ -25,10 +25,9 @@ export function PropertiesPanel() {
 
   if (!activeComponent) {
     return (
-      <div>
-        <h3 className="text-lg font-semibold mb-4 text-slate-900">General Settings</h3>
+      <StyledPropertiesPanel>
         <GeneralProperties />
-      </div>
+      </StyledPropertiesPanel>
     );
   }
 
@@ -58,32 +57,16 @@ export function PropertiesPanel() {
         return <MenuProperties component={activeComponent} {...commonProps} />;
       default:
         return (
-          <p className="text-sm text-gray-500">
+          <div className="p-4 text-sm text-gray-500">
             No properties to edit for this component.
-          </p>
+          </div>
         );
     }
   };
 
   return (
-    <div>
-      <h3 className="text-lg font-semibold mb-4 text-slate-900">
-        Editing: {activeComponent.type}
-      </h3>
+    <StyledPropertiesPanel>
       {renderPropertiesForm()}
-      <div className="mt-6">
-        <button
-          onClick={() => {
-            if (activeComponent) {
-              saveAsModule(activeComponent);
-              alert(`${activeComponent.type} saved as a module!`);
-            }
-          }}
-          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          Save as Module
-        </button>
-      </div>
-    </div>
+    </StyledPropertiesPanel>
   );
 }
