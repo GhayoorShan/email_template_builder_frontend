@@ -248,7 +248,28 @@ export const useStore = create<StoreState>()(
   devtools(
     (set, get) => ({
       // Initial state
-      components: [],
+      components: [
+        {
+          id: 'structure-1',
+          parentId: null,
+          type: 'Structure',
+          children: [
+            {
+              id: 'onecol-1',
+              parentId: 'structure-1',
+              type: 'OneColumn',
+              children: [
+                {
+                  id: 'column-1',
+                  parentId: 'onecol-1',
+                  type: 'Column',
+                  children: []
+                }
+              ]
+            }
+          ]
+        }
+      ],
       modules: [],
       activeId: null,
       dropIndicatorId: null,
@@ -257,7 +278,28 @@ export const useStore = create<StoreState>()(
         contentWidth: 600,
       },
       history: [{
-        components: [],
+        components: [
+          {
+            id: 'structure-1',
+            parentId: null,
+            type: 'Structure',
+            children: [
+              {
+                id: 'onecol-1',
+                parentId: 'structure-1',
+                type: 'OneColumn',
+                children: [
+                  {
+                    id: 'column-1',
+                    parentId: 'onecol-1',
+                    type: 'Column',
+                    children: []
+                  }
+                ]
+              }
+            ]
+          }
+        ],
         globalStyles: {
           backgroundColor: '#f1f1f1',
           contentWidth: 600,

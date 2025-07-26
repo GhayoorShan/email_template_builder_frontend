@@ -19,7 +19,7 @@ import { useStore } from '../store';
 import type { CanvasComponent } from '../store';
 import { Draggable } from './Draggable';
 
-export const availableComponents = [
+const availableComponents = [
   { id: 'Text', name: 'Text', category: 'Content', icon: <Type /> },
   { id: 'Heading', name: 'Heading', category: 'Content', icon: <Heading1 /> },
   {
@@ -60,7 +60,7 @@ export const availableComponents = [
     category: 'Structure',
     icon: <TwoColumnIcon />,
   },
-];
+] as const;
 
 interface ComponentPanelProps {
   activeTab: string;
@@ -110,19 +110,29 @@ const ComponentPanel: React.FC<ComponentPanelProps> = ({ activeTab }) => {
     );
   }
 
+  const isStructureTab = activeTab.toLowerCase() === 'structure';
+
   return (
     <div className="p-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className={`grid gap-3 ${isStructureTab ? 'grid-cols-1' : 'grid-cols-2'}`}>
         {filteredComponents.map((comp) => (
           <Draggable key={comp.id} id={comp.id}>
-            <div className="flex flex-col items-center justify-center p-3 bg-white border border-slate-200 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:bg-slate-50 hover:border-blue-500 transition-all aspect-square">
-              {React.cloneElement(comp.icon, {
-                className: 'h-6 w-6 text-slate-600 mb-2',
-              })}
-              <span className="font-medium text-xs text-slate-700 text-center">
-                {comp.name}
-              </span>
-            </div>
+            {isStructureTab ? (
+              <div className="flex items-center justify-center p-4 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg cursor-grab active:cursor-grabbing hover:bg-gray-100 hover:border-blue-400 transition-all h-24">
+                <span className="font-medium text-sm text-gray-500 text-center">
+                  {comp.name}
+                </span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-3 bg-white border border-slate-200 rounded-lg shadow-sm cursor-grab active:cursor-grabbing hover:bg-slate-50 hover:border-blue-500 transition-all aspect-square">
+                {React.cloneElement(comp.icon, {
+                  className: 'h-6 w-6 text-slate-600 mb-2',
+                })}
+                <span className="font-medium text-xs text-slate-700 text-center">
+                  {comp.name}
+                </span>
+              </div>
+            )}
           </Draggable>
         ))}
       </div>
@@ -130,4 +140,4 @@ const ComponentPanel: React.FC<ComponentPanelProps> = ({ activeTab }) => {
   );
 };
 
-export { ComponentPanel };
+export { ComponentPanel, availableComponents };

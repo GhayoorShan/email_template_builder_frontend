@@ -4,6 +4,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { ComponentRenderer } from './ComponentRenderer';
+import { DropPlaceholder } from './DropPlaceholder';
 
 export const Canvas: React.FC = () => {
   const { setNodeRef, isOver } = useDroppable({
@@ -18,24 +19,17 @@ export const Canvas: React.FC = () => {
   return (
     <div
       ref={setNodeRef}
-      className={`w-full h-full bg-gray-50 p-4 overflow-y-auto ${isOver && isEmpty ? 'bg-blue-50' : ''}`}>
-      <SortableContext items={components.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-        {isEmpty ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center text-gray-400 border-2 border-dashed border-gray-300 rounded-lg p-12">
-              <p className="font-semibold">
-                {isOver ? 'Drop here to start' : 'Drag content or structures here'}
-              </p>
-            </div>
-          </div>
-        ) : (
+      className="w-full min-h-screen bg-gray-50 flex flex-col items-center p-6"
+    >
+      <div className="max-w-[800px] w-full mx-auto bg-white rounded-xl shadow-lg py-8 px-6 min-h-[600px] flex flex-col">
+        <SortableContext items={components.map((c) => c.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-4">
             {components.map((component) => (
               <ComponentRenderer key={component.id} component={component} />
             ))}
           </div>
-        )}
-      </SortableContext>
+        </SortableContext>
+      </div>
     </div>
   );
 };

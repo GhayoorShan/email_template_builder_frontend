@@ -39,27 +39,9 @@ const generateSocialIconsMjml = (component: any) => {
 
 // Helper function to generate menu MJML
 const generateMenuMjml = (component: any) => {
-  const { alignment, itemPadding, textColor, hoverTextColor, items } = component;
+  const { textColor, hoverTextColor, items } = component;
   
-  const menuItems = items.map((item: { text: string; url: string }) => {
-    return `
-      <mj-text
-        padding="${itemPadding}"
-        color="${textColor}"
-        align="${alignment}"
-        css-class="menu-item"
-        mj-class="menu-item"
-      >
-        <a 
-          href="${item.url}" 
-          style="color: ${textColor}; text-decoration: none;"
-          onmouseover="this.style.color='${hoverTextColor}'"
-          onmouseout="this.style.color='${textColor}'"
-        >
-          ${item.text}
-        </a>
-      </mj-text>`;
-  }).join('\n');
+
   
   // Always wrap in section and column to ensure valid MJML
   return `

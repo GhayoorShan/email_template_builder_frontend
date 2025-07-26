@@ -10,10 +10,10 @@ import { PreviewModal } from "./components/PreviewModal";
 import { generateMjml } from "./utils/mjmlGenerator";
 import { compileMjml } from './api';
 import { availableComponents } from "./components/ComponentPanel";
-import { ComponentTabs } from "./components/ComponentTabs";
-import { ComponentPanel } from "./components/ComponentPanel";
 import { Canvas } from './components/Canvas';
 import { useDebounce } from './hooks/useDebounce';
+import { IconSidebar } from './components/IconSidebar';
+import { FlyoutPanel } from './components/FlyoutPanel';
 
 function App() {
   const components = useStore((state) => state.components);
@@ -24,7 +24,7 @@ function App() {
 
   const [activeComponent, setActiveComponent] = useState<CanvasComponent | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('content');
+  const [activeTab, setActiveTab] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [isRightSidebarOpen] = useState(true);
   const [compiledHtml, setCompiledHtml] = useState('');
@@ -121,12 +121,12 @@ function App() {
       onDragEnd={handleDragEnd}
     >
       <div className="flex h-screen bg-slate-100 font-sans">
-        <div className="w-80 bg-white border-r border-slate-200 flex flex-col">
-          <ComponentTabs activeTab={activeTab} onTabChange={setActiveTab} />
-          <div className="flex-1 overflow-y-auto">
-            <ComponentPanel activeTab={activeTab} />
-          </div>
-        </div>
+        <IconSidebar activeCategory={activeTab} onCategoryChange={setActiveTab} />
+        <FlyoutPanel 
+          isOpen={activeTab !== null} 
+          activeTab={activeTab || ''} 
+          onClose={() => setActiveTab(null)} 
+        />
 
         <div className="flex-1 flex flex-col">
           <TopNavigation 
