@@ -4,36 +4,27 @@ import type { CanvasComponent, GlobalStyles } from "../store";
 const generateSocialIconsMjml = (component: any) => {
   const { alignment, iconSize, iconSpacing, icons } = component;
   
+  // MJML expects 'name' for built-in icons, not 'src'.
   const socialIcons = icons.map((icon: { platform: string; url: string; altText: string }) => {
-    const iconsMap: Record<string, string> = {
-      facebook: 'https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/facebook.svg',
-      twitter: 'https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/twitter.svg',
-      instagram: 'https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/instagram.svg',
-      linkedin: 'https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/linkedin.svg',
-      youtube: 'https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/youtube.svg',
-      pinterest: 'https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/pinterest.svg',
-      tiktok: 'https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/tiktok.svg'
-    };
-    
-    const iconUrl = iconsMap[icon.platform] || '';
-    
     return `
       <mj-social-element
+        name="${icon.platform}"
         href="${icon.url}"
-        src="${iconUrl}"
         alt="${icon.altText}"
-        icon-size="${iconSize}"
+        icon-size="${iconSize ? parseInt(iconSize, 10) + 'px' : '24px'}"
         icon-padding="0"
-        padding="0 ${iconSpacing} 0 0"
+        padding="0 ${iconSpacing || 8} 0 0"
       ></mj-social-element>`;
   }).join('\n');
   
+  // MJML expects align to be 'left', 'center', or 'right'.
+  const alignValue = ['left','center','right'].includes(alignment) ? alignment : 'left';
+  const iconSizeValue = Math.min(Math.max(parseInt(iconSize, 10), 12), 64);
   return `
     <mj-social
       mode="horizontal"
-      icon-size="${iconSize}"
-      text-mode="false"
-      align="${alignment}"
+      icon-size="${iconSizeValue}px"
+      align="${alignValue}"
       padding="10px 0"
     >
       ${socialIcons}
@@ -138,11 +129,11 @@ export function generateMjml(components: CanvasComponent[], globalStyles: Global
           break;
           
         case "SocialMedia":
-          mjml = generateSocialIconsMjml(component);
+          mjml = `<mj-section><mj-column>${generateSocialIconsMjml(component)}</mj-column></mj-section>`;
           break;
           
         case "Menu":
-          mjml = generateMenuMjml(component);
+          mjml = `<mj-section><mj-column>${generateMenuMjml(component)}</mj-column></mj-section>`;
           break;
 
         default:

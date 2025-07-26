@@ -20,6 +20,10 @@ export const SocialMediaProperties: React.FC<SocialMediaPropertiesProps> = ({
   component, 
   onUpdate 
 }) => {
+  // Defensive: ensure icons array exists
+  const icons = component.icons || [];
+  // Defensive: ensure alignment field exists
+  const alignment = component.alignment || 'left';
   const updateIcon = (index: number, updates: Partial<SocialMediaComponent['icons'][0]>) => {
     const newIcons = [...component.icons];
     newIcons[index] = { ...newIcons[index], ...updates };

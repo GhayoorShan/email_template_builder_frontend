@@ -1,5 +1,5 @@
 import "./App.css";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, TouchSensor, closestCenter } from '@dnd-kit/core';
 import { useStore } from './store';
@@ -49,7 +49,11 @@ function App() {
       });
   }, [debouncedComponents, debouncedGlobalStyles]);
 
+  // Track if a drag is in progress
+  const isDraggingRef = useRef(false);
+
   const handleDragStart = (event: DragStartEvent) => {
+    isDraggingRef.current = true;
     const { active } = event;
     setActiveId(active.id as string);
     const isNew = availableComponents.some(c => c.id === active.id);
@@ -63,9 +67,12 @@ function App() {
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (isDraggingRef.current) {
+      setActiveId(null);
+      setActiveComponent(null);
+      isDraggingRef.current = false;
+    }
     const { active, over } = event;
-    setActiveId(null);
-    setActiveComponent(null);
 
     if (!over) return;
 
@@ -73,18 +80,21 @@ function App() {
     const overId = over.id as string;
     const componentId = active.id as string;
 
+    let parentId: string | null = null;
+    if (overId === 'canvas-root') {
+      parentId = null;
+    } else if (overId.startsWith('droppable-')) {
+      parentId = overId.replace('droppable-', '').replace(/-(left|right)$/, '');
+    }
+
     const targetIndex = 999; // Simplified: always append
 
     if (isNewComponent) {
       const componentType = active.id as CanvasComponent['type'];
-      const parentId = overId.includes('canvas-root') || overId.includes('column') ? overId.replace('droppable-','') : null;
-      const finalParentId = overId === 'canvas-root' ? null : parentId;
-      addComponent(componentType, finalParentId, targetIndex);
+      addComponent(componentType, parentId, targetIndex);
     } else {
-      const targetContainerId = overId.includes('canvas-root') || overId.includes('column') ? overId.replace('droppable-','') : null;
-      const finalTargetContainerId = overId === 'canvas-root' ? null : targetContainerId;
-      if (componentId !== finalTargetContainerId) {
-        moveComponent(componentId, finalTargetContainerId, targetIndex);
+      if (componentId !== parentId) {
+        moveComponent(componentId, parentId, targetIndex);
       }
     }
   };

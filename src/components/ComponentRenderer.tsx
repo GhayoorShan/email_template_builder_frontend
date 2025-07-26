@@ -6,7 +6,7 @@ import { useStore } from '../store';
 import type { CanvasComponent, StructureComponent, ColumnComponent, SectionComponent, OneColumnComponent, TwoColumnComponent } from '../store';
 
 // Import your actual components
-import { Text, Button, Image, Divider, Heading } from './renderer';
+import { Text, Button, Image, Divider, Heading, SocialMedia, Menu } from './renderer';
 
 const StructureContainer: React.FC<{ component: StructureComponent }> = ({ component }) => {
   const { setNodeRef, isOver } = useDroppable({
@@ -217,6 +217,8 @@ const componentMap: { [key in CanvasComponent['type']]?: React.ComponentType<any
   Image,
   Divider,
   Heading,
+  SocialMedia,
+  Menu,
   Structure: StructureContainer,
   Section: SectionContainer,
   OneColumn: OneColumnContainer,
@@ -236,6 +238,40 @@ export const ComponentRenderer: React.FC<{ component: CanvasComponent }> = ({ co
   
   const setActiveId = useStore(state => state.setActiveId);
   const moveComponent = useStore(state => state.moveComponent);
+  const removeComponent = useStore(state => state.removeComponent);
+  const duplicateComponent = useStore(state => state.duplicateComponent);
+  const activeId = useStore(state => state.activeId);
+  const components = useStore(state => state.components);
+
+  // Move up/down helpers
+  function moveUp() {
+    const parentId = component.parentId || null;
+    const parent = parentId ? findParent(components, parentId) : { children: components };
+    if (!parent || !Array.isArray(parent.children)) return;
+    const idx = parent.children.findIndex((c: any) => c.id === component.id);
+    if (idx > 0) {
+      moveComponent(component.id, parentId, idx - 1);
+    }
+  }
+  function moveDown() {
+    const parentId = component.parentId || null;
+    const parent = parentId ? findParent(components, parentId) : { children: components };
+    if (!parent || !Array.isArray(parent.children)) return;
+    const idx = parent.children.findIndex((c: any) => c.id === component.id);
+    if (idx < parent.children.length - 1) {
+      moveComponent(component.id, parentId, idx + 1);
+    }
+  }
+  function findParent(tree: any[], id: string): any | null {
+    for (const node of tree) {
+      if (node.id === id) return node;
+      if (Array.isArray(node.children)) {
+        const found = findParent(node.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -255,14 +291,53 @@ export const ComponentRenderer: React.FC<{ component: CanvasComponent }> = ({ co
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className="relative group"
+      className={`relative group ${activeId === component.id ? 'ring-2 ring-indigo-500' : ''}`}
       onClick={(e) => {
         e.stopPropagation();
         setActiveId(component.id);
       }}
     >
+      {/* Drag handle for dnd-kit */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute top-1 left-1 w-3 h-3 bg-indigo-400 rounded-full cursor-grab opacity-70 hover:opacity-100 z-20 drag-handle"
+        title="Drag to move"
+        onClick={e => e.stopPropagation()} // Prevent drag handle click from selecting
+      />
+      {/* Floating Toolbar for selected component */}
+      {activeId === component.id && (
+        <div className="absolute top-2 right-2 z-10 flex gap-1 bg-white/90 rounded shadow p-1 border border-slate-200 animate-fade-in">
+          <button
+            onClick={e => { e.stopPropagation(); duplicateComponent(component.id); }}
+            className="p-1 hover:bg-slate-100 rounded text-slate-600"
+            title="Duplicate"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8a2 2 0 002-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v6a2 2 0 002 2z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2" /></svg>
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); removeComponent(component.id); }}
+            className="p-1 hover:bg-slate-100 rounded text-red-500"
+            title="Delete"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); moveUp(); }}
+            className="p-1 hover:bg-slate-100 rounded text-slate-600"
+            title="Move Up"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); moveDown(); }}
+            className="p-1 hover:bg-slate-100 rounded text-slate-600"
+            title="Move Down"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </button>
+        </div>
+      )}
       <div className="relative">
         <RenderedComponent component={component} />
       </div>

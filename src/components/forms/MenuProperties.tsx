@@ -10,6 +10,10 @@ export const MenuProperties: React.FC<MenuPropertiesProps> = ({
   component, 
   onUpdate 
 }) => {
+  // Defensive: ensure items array exists
+  const items = component.items || [];
+  // Defensive: ensure alignment field exists
+  const alignment = component.alignment || 'left';
   const updateItem = (index: number, updates: Partial<MenuComponent['items'][0]>) => {
     const newItems = [...component.items];
     newItems[index] = { ...newItems[index], ...updates };

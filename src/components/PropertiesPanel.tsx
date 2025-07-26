@@ -4,6 +4,7 @@ import { ButtonProperties } from "./forms/ButtonProperties";
 import { ImageProperties } from "./forms/ImageProperties";
 import { TextProperties } from "./forms/TextProperties";
 import { GeneralProperties } from "./forms/GeneralProperties";
+import { HeadingProperties } from "./forms/HeadingProperties";
 import { SectionProperties } from "./forms/SectionProperties";
 import { DividerProperties } from "./forms/DividerProperties";
 import { SocialMediaProperties } from "./forms/SocialMediaProperties";
@@ -16,7 +17,7 @@ export function PropertiesPanel() {
     saveAsModule,
   } = useStore(
     useShallow((state) => ({
-      activeComponent: state.components.find((c) => c.id === state.activeId),
+      activeComponent: state.activeId ? state.findComponent(state.activeId) : undefined,
       updateComponent: state.updateComponent,
       saveAsModule: state.saveAsModule,
     }))
@@ -45,6 +46,8 @@ export function PropertiesPanel() {
         return <TextProperties component={activeComponent} {...commonProps} />;
       case "Image":
         return <ImageProperties component={activeComponent} {...commonProps} />;
+      case "Heading":
+        return <HeadingProperties component={activeComponent} {...commonProps} />;
       case "Section":
         return <SectionProperties component={activeComponent} {...commonProps} />;
       case "Divider":
