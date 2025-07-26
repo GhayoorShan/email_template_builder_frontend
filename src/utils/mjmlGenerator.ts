@@ -20,15 +20,21 @@ const generateSocialIconsMjml = (component: any) => {
   // MJML expects align to be 'left', 'center', or 'right'.
   const alignValue = ['left','center','right'].includes(alignment) ? alignment : 'left';
   const iconSizeValue = Math.min(Math.max(parseInt(iconSize, 10), 12), 64);
+  
+  // Always wrap in section and column to ensure valid MJML
   return `
-    <mj-social
-      mode="horizontal"
-      icon-size="${iconSizeValue}px"
-      align="${alignValue}"
-      padding="10px 0"
-    >
-      ${socialIcons}
-    </mj-social>`;
+    <mj-section>
+      <mj-column>
+        <mj-social
+          mode="horizontal"
+          icon-size="${iconSizeValue}px"
+          align="${alignValue}"
+          padding="10px 0"
+        >
+          ${socialIcons}
+        </mj-social>
+      </mj-column>
+    </mj-section>`;
 };
 
 // Helper function to generate menu MJML
@@ -55,10 +61,26 @@ const generateMenuMjml = (component: any) => {
       </mj-text>`;
   }).join('\n');
   
+  // Always wrap in section and column to ensure valid MJML
   return `
     <mj-section>
       <mj-column>
-        ${menuItems}
+        <mj-table>
+          <tr>
+            ${items.map((item: { text: string; url: string }) => 
+              `<td style="padding: 0 10px;">
+                <a href="${item.url}" 
+                   style="color: ${textColor}; 
+                          text-decoration: none; 
+                          transition: color 0.2s ease-in-out;"
+                   onmouseover="this.style.color='${hoverTextColor}'"
+                   onmouseout="this.style.color='${textColor}'">
+                  ${item.text}
+                </a>
+              </td>`
+            ).join('')}
+          </tr>
+        </mj-table>
       </mj-column>
     </mj-section>`;
 };
@@ -129,18 +151,21 @@ export function generateMjml(components: CanvasComponent[], globalStyles: Global
           break;
           
         case "SocialMedia":
-          mjml = `<mj-section><mj-column>${generateSocialIconsMjml(component)}</mj-column></mj-section>`;
+          // The generateSocialIconsMjml function now handles all necessary wrapping
+          mjml = generateSocialIconsMjml(component);
           break;
           
         case "Menu":
-          mjml = `<mj-section><mj-column>${generateMenuMjml(component)}</mj-column></mj-section>`;
+          // The generateMenuMjml function now handles all necessary wrapping
+          mjml = generateMenuMjml(component);
           break;
 
         default:
           break;
       }
       
-      // Only wrap non-section components in section/column
+      // Only wrap non-section, non-social, non-menu components in section/column
+      // Social and Menu components handle their own wrapping
       if (component.type !== 'Section' && component.type !== 'SocialMedia' && component.type !== 'Menu') {
         return `<mj-section><mj-column>${mjml}</mj-column></mj-section>`;
       }
