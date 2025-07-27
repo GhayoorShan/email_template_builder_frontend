@@ -1,18 +1,31 @@
 import React from 'react';
-import type { ContainerComponent } from '../../../types';
+import type { ContainerComponent, CanvasComponent } from '../../../types';
 import { useStore } from '../../../store';
+import { nanoid } from 'nanoid';
+import { Columns } from 'lucide-react';
 
 interface ContainerPropertiesProps {
   component: ContainerComponent;
 }
 
 export const ContainerProperties: React.FC<ContainerPropertiesProps> = ({ component }) => {
-  const updateComponent = useStore((state) => state.updateComponent);
+  const { updateComponent, setChildren } = useStore();
 
   const handlePropChange = (key: string, value: string | boolean) => {
     updateComponent(component.id, {
       props: { ...component.props, [key]: value }
     });
+  };
+
+  const handleLayoutChange = (widths: string[]) => {
+    const newColumns: CanvasComponent[] = widths.map(width => ({
+      id: nanoid(),
+      type: 'Column',
+      parentId: component.id,
+      children: [],
+      props: { width }
+    }));
+    setChildren(component.id, newColumns);
   };
 
   return (
@@ -130,6 +143,24 @@ export const ContainerProperties: React.FC<ContainerPropertiesProps> = ({ compon
           <option value="right">Right</option>
         </select>
       </div>
+
+      {/* Column Layout */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Column Layout
+        </label>
+        <div className="grid grid-cols-4 gap-2">
+          <button onClick={() => handleLayoutChange(['100%'])} className="p-2 border rounded hover:bg-gray-100 flex items-center justify-center space-x-1"><Columns size={16} /><span>1</span></button>
+          <button onClick={() => handleLayoutChange(['50%', '50%'])} className="p-2 border rounded hover:bg-gray-100 flex items-center justify-center space-x-1"><Columns size={16} /><span>2</span></button>
+          <button onClick={() => handleLayoutChange(['33.33%', '33.33%', '33.33%'])} className="p-2 border rounded hover:bg-gray-100 flex items-center justify-center space-x-1"><Columns size={16} /><span>3</span></button>
+          <button onClick={() => handleLayoutChange(['25%', '25%', '25%', '25%'])} className="p-2 border rounded hover:bg-gray-100 flex items-center justify-center space-x-1"><Columns size={16} /><span>4</span></button>
+          <button onClick={() => handleLayoutChange(['25%', '75%'])} className="p-2 border rounded hover:bg-gray-100">25/75</button>
+          <button onClick={() => handleLayoutChange(['75%', '25%'])} className="p-2 border rounded hover:bg-gray-100">75/25</button>
+          <button onClick={() => handleLayoutChange(['33.33%', '66.67%'])} className="p-2 border rounded hover:bg-gray-100">33/67</button>
+          <button onClick={() => handleLayoutChange(['66.67%', '33.33%'])} className="p-2 border rounded hover:bg-gray-100">67/33</button>
+        </div>
+      </div>
+
     </div>
   );
 };

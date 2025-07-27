@@ -35,9 +35,13 @@ export const Container: React.FC<ContainerProps> = ({ component, selectedId }) =
         width: component.props.fullWidth ? '100%' : 'auto',
       }}
     >
-      <div className="flex flex-wrap -mx-2">
+      <div className="flex flex-nowrap">
         {component.children?.map((child) => (
-          <div key={child.id} className="px-2 flex-1">
+          <div 
+            key={child.id} 
+            className="px-1" 
+            style={{ flexBasis: child.props.width, flexShrink: 0 }}
+          >
             <ComponentRenderer
               component={child}
               selectedId={selectedId || null}
@@ -46,8 +50,8 @@ export const Container: React.FC<ContainerProps> = ({ component, selectedId }) =
         ))}
         
         {(!component.children || component.children.length === 0) && (
-          <div className="flex items-center justify-center h-24 text-gray-400 border-2 border-dashed border-gray-300 rounded-lg w-full mx-2">
-            <p>Drop columns here</p>
+          <div className="flex items-center justify-center h-24 text-gray-400 border-2 border-dashed border-gray-300 rounded-lg w-full">
+            <p>Select a column layout to add columns.</p>
           </div>
         )}
       </div>

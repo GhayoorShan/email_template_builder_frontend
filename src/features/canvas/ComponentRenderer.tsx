@@ -26,79 +26,6 @@ const StructureContainer: React.FC<ContainerProps> = ({ component, children }) =
   );
 };
 
-const SectionContainer: React.FC<ContainerProps> = ({ component, children }) => {
-  return (
-    <div className="p-4 bg-white rounded-lg border border-gray-200">
-      <div className="text-xs font-medium text-gray-500 mb-2">Section</div>
-      <SortableContext items={'children' in component && component.children ? component.children.map(c => c.id) : []} strategy={verticalListSortingStrategy}>
-        {children}
-        {'children' in component && component.children?.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-24 text-gray-500 bg-gray-50 rounded border-2 border-dashed border-gray-300">
-            <p className="font-semibold">Drop Content Here</p>
-            <p className="text-sm">Drag blocks or columns into this section</p>
-          </div>
-        )}
-      </SortableContext>
-    </div>
-  );
-};
-
-const OneColumnContainer: React.FC<ContainerProps> = ({ component, children }) => {
-  return (
-    <div className="p-4 bg-white rounded-lg border border-gray-200">
-      <div className="text-xs font-medium text-gray-500 mb-2">1-Column Layout</div>
-      <div className="grid grid-cols-1 gap-4">
-        <SortableContext items={'children' in component && component.children ? component.children.map(c => c.id) : []} strategy={verticalListSortingStrategy}>
-          {children}
-          {'children' in component && component.children?.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-24 text-gray-500 bg-gray-50 rounded border-2 border-dashed border-gray-300">
-              <p className="font-semibold">Drop Content Here</p>
-            </div>
-          )}
-        </SortableContext>
-      </div>
-    </div>
-  );
-};
-
-const TwoColumnContainer: React.FC<ContainerProps> = ({ component, children }) => {
-  const childNodes = React.Children.toArray(children);
-  const leftChildren = childNodes.filter((_, index) => index % 2 === 0);
-  const rightChildren = childNodes.filter((_, index) => index % 2 !== 0);
-  
-  const leftIds = 'children' in component && component.children ? component.children.filter((_, index) => index % 2 === 0).map(c => c.id) : [];
-  const rightIds = 'children' in component && component.children ? component.children.filter((_, index) => index % 2 !== 0).map(c => c.id) : [];
-
-  return (
-    <div className="p-4 bg-white rounded-lg border border-gray-200">
-      <div className="text-xs font-medium text-gray-500 mb-2">2-Column Layout</div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-3 min-h-[100px] rounded bg-gray-50">
-          <div className="text-xs text-gray-400 mb-2">Left Column</div>
-          <SortableContext items={leftIds} strategy={verticalListSortingStrategy}>
-            {leftChildren}
-            {leftChildren.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-20 text-gray-400 text-sm border-2 border-dashed border-gray-300 rounded p-2">
-                <p>Left Column</p>
-              </div>
-            )}
-          </SortableContext>
-        </div>
-        <div className="p-3 min-h-[100px] rounded bg-gray-50">
-          <div className="text-xs text-gray-400 mb-2">Right Column</div>
-          <SortableContext items={rightIds} strategy={verticalListSortingStrategy}>
-            {rightChildren}
-            {rightChildren.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-20 text-gray-400 text-sm border-2 border-dashed border-gray-300 rounded p-2">
-                <p>Right Column</p>
-              </div>
-            )}
-          </SortableContext>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const ColumnContainer: React.FC<ContainerProps> = ({ component, children }) => {
   return (
@@ -120,9 +47,8 @@ const ColumnContainer: React.FC<ContainerProps> = ({ component, children }) => {
 
 const containerMap: { [key: string]: React.FC<ContainerProps> } = {
   Structure: StructureContainer,
-  Section: SectionContainer,
-  OneColumn: OneColumnContainer,
-  TwoColumn: TwoColumnContainer,
+
+
   Column: ColumnContainer,
 };
 

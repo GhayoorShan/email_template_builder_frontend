@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import {
-  RectangleHorizontal as SectionIcon,
-  Rows as OneColumnIcon,
-  Columns as TwoColumnIcon,
-} from 'lucide-react';
+
 
 // Error Boundary Component
+interface LayoutComponent {
+  id: string;
+  name: string;
+  type: string;
+  icon: React.ReactNode;
+  preview: React.ReactNode;
+}
+
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
   constructor(props: { children: React.ReactNode }) {
     super(props);
@@ -30,42 +34,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 // Layout components for the flyout panel
-const layoutComponents = [
-  { 
-    id: 'Section', 
-    name: 'Section', 
-    type: 'Section',
-    icon: <SectionIcon />,
-    preview: (
-      <div className="w-full h-16 flex items-center justify-center">
-        <div className="flex-1 h-10 border-2 border-dashed border-blue-400 rounded-lg bg-blue-50/40" />
-      </div>
-    )
-  },
-  { 
-    id: 'OneColumn', 
-    name: '1 Column',
-    type: 'OneColumn',
-    icon: <OneColumnIcon />,
-    preview: (
-      <div className="w-full h-16 flex items-center justify-center">
-        <div className="flex-1 h-10 border-2 border-dashed border-blue-400 rounded-lg bg-blue-50/40" />
-      </div>
-    )
-  },
-  { 
-    id: 'TwoColumn', 
-    name: '2 Column',
-    type: 'TwoColumn',
-    icon: <TwoColumnIcon />,
-    preview: (
-      <div className="w-full h-16 flex items-center gap-3 justify-center">
-        <div className="flex-1 h-10 border-2 border-dashed border-blue-400 rounded-lg bg-blue-50/40" />
-        <div className="flex-1 h-10 border-2 border-dashed border-blue-400 rounded-lg bg-blue-50/40" />
-      </div>
-    )
-  },
-];
+const layoutComponents: LayoutComponent[] = [];
 
 const tabs = [
   { key: 'structure', label: 'Layouts' },

@@ -11,9 +11,7 @@ import {
   Divide as DividerIcon,
   Share2 as SocialIcon,
   Menu as MenuIcon,
-  RectangleHorizontal as SectionIcon,
-  Columns as TwoColumnIcon,
-  Rows as OneColumnIcon,
+
 } from 'lucide-react';
 import { useStore } from '../../store';
 import type { CanvasComponent } from '../../types';
@@ -42,24 +40,8 @@ const availableComponents = [
     icon: <SocialIcon />,
   },
   { id: 'Menu', name: 'Menu', category: 'Content', icon: <MenuIcon /> },
-  {
-    id: 'Section',
-    name: 'Section',
-    category: 'Structure',
-    icon: <SectionIcon />,
-  },
-  {
-    id: 'OneColumn',
-    name: '1 Column',
-    category: 'Structure',
-    icon: <OneColumnIcon />,
-  },
-  {
-    id: 'TwoColumn',
-    name: '2 Columns',
-    category: 'Structure',
-    icon: <TwoColumnIcon />,
-  },
+
+
 ] as const;
 
 interface ComponentPanelProps {

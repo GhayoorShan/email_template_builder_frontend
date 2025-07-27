@@ -41,7 +41,9 @@ function App() {
   const debouncedGlobalStyles = useDebounce(globalStyles, 500);
 
   useEffect(() => {
-    const mjml = generateMjml(debouncedComponents);
+        const structureComponent = debouncedComponents.find(c => c.type === 'Structure');
+    const structureProps = structureComponent ? structureComponent.props : {};
+    const mjml = generateMjml(debouncedComponents, structureProps);
     compileMjml(mjml)
       .then(({ html }) => setCompiledHtml(html))
       .catch(err => {
@@ -133,7 +135,9 @@ function App() {
   };
 
   const handleExport = () => {
-    const mjml = generateMjml(components);
+        const structureComponent = components.find(c => c.type === 'Structure');
+    const structureProps = structureComponent ? structureComponent.props : {};
+    const mjml = generateMjml(components, structureProps);
     console.log(mjml);
   };
 

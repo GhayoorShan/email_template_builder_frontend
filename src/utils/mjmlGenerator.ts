@@ -1,17 +1,12 @@
 import type { AnyComponent } from '../types';
 
-export function generateMjml(components: AnyComponent[]): string {
+export function generateMjml(components: AnyComponent[], structureProps: any = {}): string {
   const generateComponentMjml = (component: AnyComponent): string => {
     switch (component.type) {
       case 'Structure':
-        return `
-          <mj-wrapper 
-            background-color="${component.props.emailBackgroundColor || '#f4f4f4'}"
-            padding="${component.props.padding || '0px'}"
-          >
-            ${component.children?.map(generateComponentMjml).join('') || ''}
-          </mj-wrapper>
-        `;
+        // The structure component itself doesn't render a wrapper, 
+        // this is handled by the main template body.
+        return `${component.children?.map(generateComponentMjml).join('') || ''}`;
 
       case 'Container':
         return `
@@ -100,24 +95,23 @@ export function generateMjml(components: AnyComponent[]): string {
 
   const mjmlContent = components.map(generateComponentMjml).join('\n');
   
-  // Extract Structure component settings for mj-head
-  const structureComponent = components.find(c => c.type === 'Structure');
-  const headStyles = structureComponent ? `
+  const headStyles = `
     <mj-head>
       <mj-attributes>
-        <mj-all font-family="${structureComponent.props.fontFamily || 'Arial, sans-serif'}" />
-        <mj-text font-size="${structureComponent.props.fontSize || '14px'}" line-height="${structureComponent.props.lineHeight || '1.5'}" color="${structureComponent.props.textColor || '#333333'}" />
+        <mj-all font-family="${structureProps.fontFamily || 'Arial, sans-serif'}" />
+        <mj-text font-size="${structureProps.fontSize || '14px'}" line-height="${structureProps.lineHeight || '1.5'}" color="${structureProps.textColor || '#333333'}" />
+        <mj-wrapper background-color="${structureProps.contentBackgroundColor || '#ffffff'}" />
       </mj-attributes>
       <mj-style>
-        a { color: ${structureComponent.props.linkColor || '#007bff'} !important; }
+        a { color: ${structureProps.linkColor || '#007bff'} !important; }
       </mj-style>
     </mj-head>
-  ` : '';
+  `;
 
   return `
     <mjml>
       ${headStyles}
-      <mj-body background-color="${structureComponent?.props.emailBackgroundColor || '#f4f4f4'}">
+      <mj-body width="${structureProps.emailWidth || '600px'}" background-color="${structureProps.emailBackgroundColor || '#f4f4f4'}">
         ${mjmlContent}
       </mj-body>
     </mjml>

@@ -1,10 +1,44 @@
 import React from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { TrashIcon, PlusIcon, ArrowsUpDownIcon } from '@heroicons/react/24/outline';
 import type { StructureComponent, CanvasComponent } from '../../../types';
 import { useStore } from '../../../store';
+import { useSortable } from '@dnd-kit/sortable';
+
+interface SortableItemProps {
+  id: string;
+  index: number;
+  onRemove: (id: string) => void;
+}
+
+const SortableItem: React.FC<SortableItemProps> = ({ id, index, onRemove }) => {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+
+    const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center justify-between p-3 hover:bg-gray-50">
+      <div className="flex items-center">
+        <div {...attributes} {...listeners} className="p-1 text-gray-400 hover:text-gray-600 cursor-move mr-2">
+          <ArrowsUpDownIcon className="h-4 w-4" />
+        </div>
+        <span className="text-sm text-gray-800">Container #{index + 1}</span>
+      </div>
+      <button
+        onClick={() => onRemove(id)}
+        className="p-1 text-gray-400 hover:text-red-600"
+      >
+        <TrashIcon className="h-4 w-4" />
+      </button>
+    </div>
+  );
+};
 
 interface StructurePropertiesProps {
   component: StructureComponent;
@@ -104,28 +138,15 @@ export const StructureProperties: React.FC<StructurePropertiesProps> = ({ compon
                 items={children.map((c) => c.id)}
                 strategy={verticalListSortingStrategy}
               >
-                {children.map((container, index) => (
-                  <div
-                    key={container.id}
-                    className="flex items-center justify-between p-3 hover:bg-gray-50"
-                  >
-                    <div className="flex items-center">
-                      <div className="p-1 text-gray-400 hover:text-gray-600 cursor-move mr-2">
-                        <ArrowsUpDownIcon className="h-4 w-4" />
-                      </div>
-                      <span className="text-sm font-medium text-gray-700">
-                        Container {index + 1}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => removeContainer(container.id)}
-                      className="text-red-500 hover:text-red-700 p-1"
-                      title="Remove container"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
+                {children.length > 0 ? (
+                  children.map((container, index) => (
+                    <SortableItem key={container.id} id={container.id} index={index} onRemove={removeContainer} />
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-sm text-gray-500">
+                    No containers yet. Add one to get started.
                   </div>
-                ))}
+                )}
               </SortableContext>
             </DndContext>
             {children.length === 0 && (

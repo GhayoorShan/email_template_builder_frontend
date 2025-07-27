@@ -91,7 +91,8 @@ export interface CanvasSlice {
   ) => void;
   removeComponent: (id: string) => void;
   duplicateComponent: (id: string) => void;
-  updateComponent: (id: string, newProps: Partial<CanvasComponent>) => void;
+  updateComponent: (id:string, newProps: Partial<CanvasComponent>) => void;
+  setChildren: (parentId: string, children: CanvasComponent[]) => void;
   findComponent: (id: string) => CanvasComponent | null;
   setSelectedId: (id: string | null) => void;
   saveAsModule: (component: CanvasComponent) => void;
@@ -441,5 +442,24 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
       id: `module-${Date.now()}`,
     };
     set((state: StoreState) => ({ modules: [...state.modules, newModule] }));
+  },
+
+  setChildren: (parentId, children) => {
+    const recursiveSet = (components: CanvasComponent[]): CanvasComponent[] => {
+      return components.map(c => {
+        if (c.id === parentId) {
+          return { ...c, children };
+        }
+        if (c.children) {
+          return { ...c, children: recursiveSet(c.children) };
+        }
+        return c;
+      });
+    };
+
+    set(state => ({ components: recursiveSet(state.components) }));
+    if ('saveToHistory' in get()) {
+      (get() as any).saveToHistory();
+    }
   },
 });
