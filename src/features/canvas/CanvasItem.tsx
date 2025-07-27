@@ -4,11 +4,10 @@ import type {
   TextComponent, 
   ButtonComponent, 
   ImageComponent,
-  SectionComponent,
   DividerComponent,
   SocialMediaComponent,
   MenuComponent
-} from "../../types";
+} from "../../types/index";
 import { 
   FaceSmileIcon as FacebookIcon,
   ChatBubbleLeftRightIcon as TwitterIcon,
@@ -27,8 +26,6 @@ const isButtonComponent = (component: CanvasComponent): component is ButtonCompo
   component.type === 'Button';
 const isImageComponent = (component: CanvasComponent): component is ImageComponent => 
   component.type === 'Image';
-const isSectionComponent = (component: CanvasComponent): component is SectionComponent => 
-  component.type === 'Section';
 const isDividerComponent = (component: CanvasComponent): component is DividerComponent => 
   component.type === 'Divider';
 const isSocialMediaComponent = (component: CanvasComponent): component is SocialMediaComponent => 
@@ -43,51 +40,33 @@ interface CanvasItemProps {
 }
 
 const CanvasItem: React.FC<CanvasItemProps> = ({ component, isDragging = false, onSelect }) => {
-  const setActiveId = useStore(state => state.setActiveId);
-  const isSelected = useStore(state => state.activeId === component.id);
+  const { setSelectedId, selectedId } = useStore();
+  const isSelected = selectedId === component.id;
 
   // Handle component selection
   const handleSelect = (e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation();
-    setActiveId(component.id);
+    setSelectedId(component.id);
     onSelect?.();
   };
 
   // Render the actual component based on its type and properties
   const renderContent = () => {
     // Use type guards to properly type-narrow the component
-    if (isSectionComponent(component)) {
-      return (
-        <div 
-          style={{
-            backgroundColor: component.backgroundColor,
-            padding: component.padding,
-            border: `${component.borderWidth} solid ${component.borderColor}`,
-            borderRadius: component.borderRadius,
-            minHeight: '60px',
-          }}
-          className="relative"
-        >
-          <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative">
-          {component.children.map((child: CanvasComponent) => (
-  <CanvasItem key={child.id} component={child} />
-))}
-          </div>
-        </div>
-      );
-    }
-    
+
     if (isDividerComponent(component)) {
       return (
         <div 
           style={{
-            borderTop: `${component.borderWidth} ${component.borderStyle} ${component.borderColor}`,
-            width: component.width,
-            margin: component.padding,
+            borderTop: `${component.props.height || '1px'} solid ${component.props.color || '#cccccc'}`,
+            width: component.props.width || '100%',
+            paddingTop: component.props.paddingTop || '10px',
+            paddingBottom: component.props.paddingBottom || '10px',
+            textAlign: component.props.align || 'center',
           }}
-          className="mx-auto"
-        />
+        >
+          <div style={{ display: 'inline-block', width: component.props.width || '100%', borderTop: `${component.props.height || '1px'} solid ${component.props.color || '#cccccc'}` }} />
+        </div>
       );
     }
     
@@ -105,21 +84,21 @@ const CanvasItem: React.FC<CanvasItemProps> = ({ component, isDragging = false, 
       return (
         <div 
           style={{
-            textAlign: component.alignment as React.CSSProperties["textAlign"],
+            textAlign: component.props.alignment as React.CSSProperties["textAlign"],
             padding: '10px 0',
           }}
         >
-          <div style={{ display: 'inline-flex', gap: component.iconSpacing }}>
-            {component.icons.map((icon, index) => (
+          <div style={{ display: 'inline-flex', gap: component.props.iconSpacing }}>
+            {component.props.icons?.map((icon, index) => (
               <a 
                 key={index} 
                 href={icon.url} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                style={{ color: '#555' }}
+                style={{ color: '#333' }}
                 className="hover:opacity-80 transition-opacity"
               >
-                {socialIcons[icon.platform as keyof typeof socialIcons] || icon.platform}
+                {socialIcons[icon.platform as keyof typeof socialIcons]}
               </a>
             ))}
           </div>
@@ -131,19 +110,18 @@ const CanvasItem: React.FC<CanvasItemProps> = ({ component, isDragging = false, 
       return (
         <div 
           style={{
-            textAlign: component.alignment as React.CSSProperties["textAlign"],
-            backgroundColor: '#f8f9fa',
+            textAlign: component.props.alignment as React.CSSProperties["textAlign"],
             padding: '10px 0',
           }}
         >
-          <div style={{ display: 'inline-flex', gap: component.itemSpacing }}>
-            {component.items.map((item, index) => (
+          <div style={{ display: 'inline-flex', gap: component.props.itemSpacing }}>
+            {component.props.items?.map((item, index) => (
               <a 
                 key={index} 
                 href={item.url}
                 style={{
-                  color: component.textColor,
-                  padding: component.itemPadding,
+                  color: component.props.textColor,
+                  padding: component.props.itemPadding,
                   textDecoration: 'none',
                 }}
                 className="hover:opacity-80 transition-opacity"
@@ -160,16 +138,18 @@ const CanvasItem: React.FC<CanvasItemProps> = ({ component, isDragging = false, 
       return (
         <p
           style={{
-            textAlign: component.align as React.CSSProperties["textAlign"],
-            paddingTop: component.paddingTop,
-            paddingRight: component.paddingRight,
-            paddingBottom: component.paddingBottom,
-            paddingLeft: component.paddingLeft,
-            color: component.color,
+            textAlign: component.props.textAlign as React.CSSProperties["textAlign"],
+            paddingTop: component.props.paddingTop,
+            paddingRight: component.props.paddingRight,
+            paddingBottom: component.props.paddingBottom,
+            paddingLeft: component.props.paddingLeft,
+            color: component.props.color,
             margin: 0,
+            lineHeight: component.props.lineHeight,
+            fontSize: component.props.fontSize,
           }}
         >
-          {component.text}
+          {component.props.content}
         </p>
       );
     }
@@ -178,22 +158,19 @@ const CanvasItem: React.FC<CanvasItemProps> = ({ component, isDragging = false, 
       return (
         <button
           style={{
-            paddingTop: component.paddingTop,
-            paddingRight: component.paddingRight,
-            paddingBottom: component.paddingBottom,
-            paddingLeft: component.paddingLeft,
-            backgroundColor: component.backgroundColor,
-            borderRadius: component.borderRadius,
-            color: component.color,
+            padding: component.props.padding,
+            backgroundColor: component.props.backgroundColor,
+            borderRadius: component.props.borderRadius,
+            color: component.props.textColor,
             border: "none",
             cursor: 'pointer',
             display: 'block',
-            margin: '0 auto',
-            textAlign: component.align as React.CSSProperties["textAlign"],
+            width: component.props.width,
+            textAlign: component.props.align as React.CSSProperties["textAlign"],
           }}
           className="hover:opacity-90 transition-opacity"
         >
-          {component.buttonText}
+          {component.props.text}
         </button>
       );
     }
@@ -201,14 +178,15 @@ const CanvasItem: React.FC<CanvasItemProps> = ({ component, isDragging = false, 
     if (isImageComponent(component)) {
       return (
         <img
-          src={component.src || 'https://via.placeholder.com/600x300?text=Image'}
-          alt=""
+          src={component.props.src || 'https://via.placeholder.com/600x300?text=Image'}
+          alt={component.props.alt || ''}
           style={{
-            maxWidth: "100%",
+            maxWidth: component.props.width || "100%",
+            height: component.props.height || 'auto',
             display: "block",
-            margin: "0 auto",
+            margin: component.props.align === 'center' ? '0 auto' : (component.props.align === 'right' ? '0 0 0 auto' : '0'),
+            padding: component.props.padding,
           }}
-          className="max-h-48 object-cover"
         />
       );
     }
@@ -229,7 +207,6 @@ const CanvasItem: React.FC<CanvasItemProps> = ({ component, isDragging = false, 
       Text: "min-h-[40px] flex items-center",
       Button: "min-h-[40px] flex items-center justify-center",
       Image: "min-h-[100px] flex items-center justify-center bg-gray-100",
-      Section: "min-h-[100px] p-4 bg-gray-50",
       Divider: "h-[1px] my-4 bg-gray-200",
       SocialMedia: "min-h-[60px] flex items-center justify-center bg-white",
       Menu: "min-h-[60px] flex items-center bg-gray-50"
@@ -241,11 +218,14 @@ const CanvasItem: React.FC<CanvasItemProps> = ({ component, isDragging = false, 
 
   // Get alignment based on component type
   const getTextAlignment = (): React.CSSProperties['textAlign'] => {
-    if (isTextComponent(component) || isButtonComponent(component)) {
-      return component.align as React.CSSProperties['textAlign'];
+    if (isTextComponent(component)) {
+      return component.props.textAlign as React.CSSProperties['textAlign'];
+    }
+    if (isButtonComponent(component) || isImageComponent(component)) {
+      return component.props.align as React.CSSProperties['textAlign'];
     }
     if (isSocialMediaComponent(component) || isMenuComponent(component)) {
-      return component.alignment as React.CSSProperties['textAlign'];
+      return component.props.alignment as React.CSSProperties['textAlign'];
     }
     return 'left';
   };

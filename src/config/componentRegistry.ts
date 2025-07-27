@@ -38,8 +38,13 @@ const SocialMediaProperties = React.lazy(() => import('../features/email-compone
 const MenuRenderer = React.lazy(() => import('../features/email-components/Menu/Renderer').then(module => ({ default: module.Menu })));
 const MenuProperties = React.lazy(() => import('../features/email-components/Menu/Properties').then(module => ({ default: module.MenuProperties })));
 
-const SectionProperties = React.lazy(() => import('../features/email-components/Section/Properties').then(module => ({ default: module.SectionProperties })));
-const SectionRenderer = React.lazy(() => import('../features/email-components/Section/Renderer').then(module => ({ default: module.Section })));
+// Structure and Container components
+
+const StructureProperties = React.lazy(() => import('../features/email-components/Structure/Properties').then(module => ({ default: module.StructureProperties })));
+const StructureRenderer = React.lazy(() => import('../features/email-components/Structure/Renderer').then(module => ({ default: module.default })));
+
+const ContainerProperties = React.lazy(() => import('../features/email-components/Container/Properties').then(module => ({ default: module.ContainerProperties })));
+const ContainerRenderer = React.lazy(() => import('../features/email-components/Container/Renderer').then(module => ({ default: module.default })));
 
 const ColumnRenderer = React.lazy(() => import('../features/email-components/Column/Renderer').then(module => ({ default: module.default })));
 const ColumnProperties = React.lazy(() => import('../features/email-components/Column/Properties').then(module => ({ default: module.ColumnProperties })));
@@ -174,10 +179,34 @@ export const componentRegistry: { [key: string]: ComponentConfig<AnyComponent> }
     isDraggable: true,
     preview: '/assets/previews/menu-preview.png',
   },
-  Section: {
-    type: 'Section',
-    renderer: SectionRenderer,
-    properties: SectionProperties,
+  Structure: {
+    type: 'Structure',
+    renderer: StructureRenderer,
+    properties: StructureProperties,
+    icon: Box,
+    defaultProps: {
+      children: [],
+      props: {
+        backgroundColor: '#ffffff',
+        padding: '0px',
+        emailWidth: '600px',
+        emailBackgroundColor: '#f4f4f4',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '14px',
+        lineHeight: '1.5',
+        textColor: '#333333',
+        linkColor: '#007bff',
+        maxWidth: '600px',
+        align: 'center'
+      }
+    },
+    isDraggable: false,
+    preview: '',
+  },
+  Container: {
+    type: 'Container',
+    renderer: ContainerRenderer,
+    properties: ContainerProperties,
     icon: Box,
     defaultProps: {
       children: [],
@@ -186,10 +215,13 @@ export const componentRegistry: { [key: string]: ComponentConfig<AnyComponent> }
         padding: '20px',
         borderWidth: '0px',
         borderColor: '#ffffff',
-        borderRadius: '0px'
+        borderRadius: '0px',
+        fullWidth: false,
+        direction: 'ltr',
+        textAlign: 'left'
       }
     },
-    isDraggable: false,
+    isDraggable: true,
     preview: '',
   },
   Column: {
@@ -205,7 +237,8 @@ export const componentRegistry: { [key: string]: ComponentConfig<AnyComponent> }
         paddingTop: '0',
         paddingRight: '0',
         paddingBottom: '0',
-        paddingLeft: '0'
+        paddingLeft: '0',
+        verticalAlign: 'top'
       }
     },
     isDraggable: false,

@@ -105,15 +105,21 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
   components: [
     {
       id: 'root',
-      type: 'Section',
+      type: 'Structure',
       parentId: null,
       children: [],
       props: {
         backgroundColor: '#ffffff',
-        padding: '20px',
-        borderWidth: '0px',
-        borderColor: '#ffffff',
-        borderRadius: '0px'
+        padding: '0px',
+        emailWidth: '600px',
+        emailBackgroundColor: '#f4f4f4',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '14px',
+        lineHeight: '1.5',
+        textColor: '#333333',
+        linkColor: '#007bff',
+        maxWidth: '600px',
+        align: 'center'
       }
     },
   ],
@@ -211,42 +217,42 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
             // Wrap image in a column
             newComponent = createColumnWithComponent(imageComponent);
             break;
-        case 'Section':
-            newComponent = { 
-              id, 
-              parentId, 
-              type, 
+        case 'Structure':
+            newComponent = {
+              id,
+              parentId,
+              type,
+              children: [],
+              props: {
+                backgroundColor: '#ffffff',
+                padding: '0px',
+                emailWidth: '600px',
+                emailBackgroundColor: '#f4f4f4',
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '14px',
+                lineHeight: '1.5',
+                textColor: '#333333',
+                linkColor: '#007bff',
+                maxWidth: '600px',
+                align: 'center'
+              }
+            };
+            break;
+        case 'Container':
+            newComponent = {
+              id,
+              parentId,
+              type,
               children: [],
               props: {
                 backgroundColor: '#ffffff',
                 padding: '20px',
-                borderWidth: '1px',
-                borderColor: '#e5e7eb',
-                borderRadius: '0.5rem'
-              }
-            };
-            break;
-        case 'OneColumn':
-            newComponent = { 
-              id, 
-              parentId, 
-              type, 
-              children: [],
-              props: {
-                backgroundColor: 'transparent',
-                padding: '10px'
-              }
-            };
-            break;
-        case 'TwoColumn':
-            newComponent = { 
-              id, 
-              parentId, 
-              type, 
-              children: [],
-              props: {
-                backgroundColor: 'transparent',
-                padding: '10px'
+                borderWidth: '0px',
+                borderColor: '#ffffff',
+                borderRadius: '0px',
+                fullWidth: false,
+                direction: 'ltr',
+                textAlign: 'left'
               }
             };
             break;
@@ -300,21 +306,6 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
                   { text: 'Contact', url: '#' },
                 ],
               },
-            };
-            break;
-        case 'Structure':
-            newComponent = { 
-              id, 
-              parentId, 
-              type, 
-              children: [],
-              props: {
-                backgroundColor: '#ffffff',
-                padding: '20px',
-                borderWidth: '1px',
-                borderColor: '#e5e7eb',
-                borderRadius: '0.5rem'
-              }
             };
             break;
         case 'Column':

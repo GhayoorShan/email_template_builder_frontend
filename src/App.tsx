@@ -41,7 +41,7 @@ function App() {
   const debouncedGlobalStyles = useDebounce(globalStyles, 500);
 
   useEffect(() => {
-    const mjml = generateMjml(debouncedComponents, debouncedGlobalStyles);
+    const mjml = generateMjml(debouncedComponents);
     compileMjml(mjml)
       .then(({ html }) => setCompiledHtml(html))
       .catch(err => {
@@ -80,53 +80,60 @@ function App() {
     const { active, over } = event;
     isDraggingRef.current = false;
 
-    if (!over) {
-      // Only clear the active component if we're not clicking on an existing component
-      if (!active.data?.current?.component) {
-        setActiveComponent(null);
-      }
-      return;
-    }
-
     const componentType = active.data?.current?.type || active.id as CanvasComponent['type'];
     const isNewComponent = (componentType in componentRegistry) || active.data?.current?.isNew;
-    const overId = over.id as string;
+    const overId = over?.id as string;
 
     // Handle the case where we're dropping a new component
     if (isNewComponent) {
-      startTransition(() => {
-        // For the root canvas area
-        if (overId === 'canvas-root' || overId === 'root') {
-          addComponent(componentType as CanvasComponent['type'], 'root', 0);
-        } 
-        // For dropping onto a container component
-        else if (overId.startsWith('droppable-')) {
-          const parentId = overId.replace('droppable-', '');
-          addComponent(componentType as CanvasComponent['type'], parentId, 0);
-        }
-      });
-      // Clear active component for new components after drop
+      if (over) {
+        startTransition(() => {
+          // For the root canvas area
+          if (overId === 'canvas-root' || overId === 'root') {
+            addComponent(componentType as CanvasComponent['type'], 'root', 0);
+          } 
+          // For dropping onto a container component
+          else if (overId.startsWith('droppable-')) {
+            const parentId = overId.replace('droppable-', '');
+            addComponent(componentType as CanvasComponent['type'], parentId, 0);
+          }
+        });
+      }
+      // Always clear active component for new components after drag end
       setActiveComponent(null);
-    } 
-    // Handle moving existing components
-    else if (active.id !== over.id) {
-      let targetParentId: string | null = null;
-      
-      if (overId === 'canvas-root' || overId === 'root') {
-        targetParentId = 'root';
-      } else if (overId.startsWith('droppable-')) {
-        targetParentId = overId.replace('droppable-', '');
-      }
+      return;
+    }
 
-      if (targetParentId) {
-        moveComponent(active.id as string, targetParentId, 0);
+    // Handle existing components
+    const existingComponent = useStore.getState().findComponent(active.id as string);
+    if (existingComponent) {
+      // If we have a valid drop target and it's different from current position, move the component
+      if (over && active.id !== over.id) {
+        let targetParentId: string | null = null;
+        
+        if (overId === 'canvas-root' || overId === 'root') {
+          targetParentId = 'root';
+        } else if (overId.startsWith('droppable-')) {
+          targetParentId = overId.replace('droppable-', '');
+        }
+
+        if (targetParentId) {
+          moveComponent(active.id as string, targetParentId, 0);
+        }
       }
-      // Don't clear active component when moving existing components
+      
+      // Always maintain selection for existing components (whether moved or just clicked)
+      setSelectedId(active.id as string);
+      setActiveComponent(existingComponent);
+    } else {
+      // If component not found, clear selection
+      setSelectedId(null);
+      setActiveComponent(null);
     }
   };
 
   const handleExport = () => {
-    const mjml = generateMjml(components, globalStyles);
+    const mjml = generateMjml(components);
     console.log(mjml);
   };
 

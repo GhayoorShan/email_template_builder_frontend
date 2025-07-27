@@ -1,7 +1,7 @@
 // Base component type that all components extend
 export type CanvasComponent = {
   id: string;
-  type: 'Column' | 'Section' | 'Structure' | 'OneColumn' | 'TwoColumn' | 'Text' | 'Heading' | 'Button' | 'Image' | 'Divider' | 'SocialMedia' | 'Menu';
+  type: 'Structure' | 'Container' | 'Column' | 'Text' | 'Heading' | 'Button' | 'Image' | 'Divider' | 'SocialMedia' | 'Menu';
   parentId: string | null;
   children?: CanvasComponent[];
   props: Record<string, any>;
@@ -20,36 +20,45 @@ type LayoutProps = {
   borderRadius?: string;
 };
 
-// Specific component types
+// Email-wide settings for Structure component
+type EmailSettings = {
+  emailWidth?: string;
+  emailBackgroundColor?: string;
+  fontFamily?: string;
+  fontSize?: string;
+  lineHeight?: string;
+  textColor?: string;
+  linkColor?: string;
+};
+
+// Stripo-like hierarchy components
+
+// Structure: Top-level email container with email-wide settings
+export type StructureComponent = CanvasComponent & {
+  type: 'Structure';
+  props: LayoutProps & EmailSettings & {
+    maxWidth?: string;
+    align?: 'left' | 'center' | 'right';
+  };
+};
+
+// Container: Section-level container (replaces old Section)
+export type ContainerComponent = CanvasComponent & {
+  type: 'Container';
+  props: LayoutProps & {
+    fullWidth?: boolean;
+    direction?: 'ltr' | 'rtl';
+    textAlign?: 'left' | 'center' | 'right';
+  };
+};
+
+// Column: Layout column within containers
 export type ColumnComponent = CanvasComponent & {
   type: 'Column';
   props: LayoutProps & {
     width?: string;
+    verticalAlign?: 'top' | 'middle' | 'bottom';
   };
-};
-
-export type SectionComponent = CanvasComponent & {
-  type: 'Section';
-  props: LayoutProps & {
-    borderWidth?: string;
-    borderColor?: string;
-    borderRadius?: string;
-  };
-};
-
-export type StructureComponent = CanvasComponent & {
-  type: 'Structure';
-  props: LayoutProps;
-};
-
-export type OneColumnComponent = CanvasComponent & {
-  type: 'OneColumn';
-  props: LayoutProps;
-};
-
-export type TwoColumnComponent = CanvasComponent & {
-  type: 'TwoColumn';
-  props: LayoutProps;
 };
 
 // Content component types
@@ -151,11 +160,9 @@ export type MenuComponent = CanvasComponent & {
 
 // Union type of all component types
 export type AnyComponent = 
-  | ColumnComponent
-  | SectionComponent
   | StructureComponent
-  | OneColumnComponent
-  | TwoColumnComponent
+  | ContainerComponent
+  | ColumnComponent
   | TextComponent
   | HeadingComponent
   | ButtonComponent
