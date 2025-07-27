@@ -152,21 +152,23 @@ export function StyledPropertiesPanel({ children }: { children: React.ReactNode 
   const [activeTab, setActiveTab] = React.useState('document');
   
   return (
-    <div className="fixed top-6 right-6 w-80 z-40">
+    <div className="w-80 h-full bg-white border-l border-gray-200 flex flex-col">
       {/* Stacked card effect */}
       <div className="absolute -bottom-1 left-1 right-1 h-2 bg-gray-100 rounded-b-lg -z-10" />
       <div className="absolute -bottom-2 left-2 right-2 h-2 bg-gray-50 rounded-b-lg -z-20" />
       
       {/* Main panel */}
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+      <div className="flex-1 flex flex-col h-full">
         {/* Header with tabs */}
-        <div className="p-4 border-b border-gray-100">
+        <div className="p-4 border-b border-gray-100 flex-shrink-0">
           <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
 
         {/* Content */}
-        <div className="p-4 max-h-[calc(100vh-120px)] overflow-y-auto">
-          {children}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            {children}
+          </div>
         </div>
       </div>
     </div>
@@ -174,9 +176,18 @@ export function StyledPropertiesPanel({ children }: { children: React.ReactNode 
 }
 
 // Main Properties Panel with all the settings
+interface PanelSettings {
+  backgroundColor: string;
+  backgroundImage: boolean;
+  messageWidth: number;
+  messageAlignment: string;
+  underlineLinks: boolean;
+  responsiveDesign: boolean;
+}
+
 export function PropertiesPanel() {
   const [activeTab, setActiveTab] = React.useState('document');
-  const [settings, setSettings] = React.useState({
+  const [settings, setSettings] = React.useState<PanelSettings>({
     backgroundColor: '#ffffff',
     backgroundImage: false,
     messageWidth: 600,
@@ -185,7 +196,7 @@ export function PropertiesPanel() {
     responsiveDesign: true,
   });
 
-  const handleChange = (key: string, value: any) => {
+  const handleChange = (key: keyof PanelSettings, value: string | number | boolean) => {
     setSettings(prev => ({
       ...prev,
       [key]: value
