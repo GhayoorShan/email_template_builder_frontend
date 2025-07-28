@@ -1,12 +1,28 @@
-import React from 'react';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { TrashIcon, PlusIcon, ArrowsUpDownIcon } from '@heroicons/react/24/outline';
-import type { StructureComponent, CanvasComponent } from '../../../types';
-import { useStore } from '../../../store';
-import { useSortable } from '@dnd-kit/sortable';
+import React from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+  TrashIcon,
+  PlusIcon,
+  ArrowsUpDownIcon,
+} from "@heroicons/react/24/outline";
+import type { StructureComponent, CanvasComponent } from "../../../types";
+import { useStore } from "../../../store";
+import { useSortable } from "@dnd-kit/sortable";
 
 interface SortableItemProps {
   id: string;
@@ -15,17 +31,26 @@ interface SortableItemProps {
 }
 
 const SortableItem: React.FC<SortableItemProps> = ({ id, index, onRemove }) => {
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id });
 
-    const style = {
+  const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center justify-between p-3 hover:bg-gray-50">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center justify-between p-3 hover:bg-gray-50"
+    >
       <div className="flex items-center">
-        <div {...attributes} {...listeners} className="p-1 text-gray-400 hover:text-gray-600 cursor-move mr-2">
+        <div
+          {...attributes}
+          {...listeners}
+          className="p-1 text-gray-400 hover:text-gray-600 cursor-move mr-2"
+        >
           <ArrowsUpDownIcon className="h-4 w-4" />
         </div>
         <span className="text-sm text-gray-800">Container #{index + 1}</span>
@@ -44,51 +69,55 @@ interface StructurePropertiesProps {
   component: StructureComponent;
 }
 
-export const StructureProperties: React.FC<StructurePropertiesProps> = ({ component }) => {
+export const StructureProperties: React.FC<StructurePropertiesProps> = ({
+  component,
+}) => {
   const updateComponent = useStore((state) => state.updateComponent);
 
   const handlePropChange = (key: string, value: string) => {
     updateComponent(component.id, {
-      props: { ...component.props, [key]: value }
+      props: { ...component.props, [key]: value },
     });
   };
-  
+
   // Ensure component.children is always an array
   const children = component.children || [];
 
   const addContainer = () => {
     const newContainer: CanvasComponent = {
       id: `container-${Date.now()}`,
-      type: 'Container',
+      type: "Container",
       props: {
-        padding: '20px 0',
-        backgroundColor: '#ffffff',
-        textAlign: 'left'
+        padding: "20px 0",
+        backgroundColor: "#ffffff",
+        textAlign: "left",
       },
       children: [
         {
           id: `column-${Date.now()}`,
-          type: 'Column',
+          type: "Column",
           props: {
-            width: '100%',
-            padding: '0 15px',
-            verticalAlign: 'top'
+            width: "100%",
+            padding: "0 15px",
+            verticalAlign: "top",
           },
           children: [],
-          parentId: `container-${Date.now()}`
-        }
+          parentId: `container-${Date.now()}`,
+        },
       ],
-      parentId: component.id
+      parentId: component.id,
     };
 
     updateComponent(component.id, {
-      children: [...(component.children || []), newContainer]
+      children: [...(component.children || []), newContainer],
     });
   };
 
   const removeContainer = (containerId: string) => {
     updateComponent(component.id, {
-      children: (component.children || []).filter(child => child.id !== containerId)
+      children: (component.children || []).filter(
+        (child) => child.id !== containerId
+      ),
     });
   };
 
@@ -101,16 +130,20 @@ export const StructureProperties: React.FC<StructurePropertiesProps> = ({ compon
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
-    
+
     if (!component.children || active.id === over.id) {
       return;
     }
 
-    const oldIndex = component.children.findIndex(item => item.id === active.id);
-    const newIndex = component.children.findIndex(item => item.id === over.id);
-    
+    const oldIndex = component.children.findIndex(
+      (item) => item.id === active.id
+    );
+    const newIndex = component.children.findIndex(
+      (item) => item.id === over.id
+    );
+
     updateComponent(component.id, {
-      children: arrayMove(component.children, oldIndex, newIndex)
+      children: arrayMove(component.children, oldIndex, newIndex),
     });
   };
 
@@ -140,7 +173,12 @@ export const StructureProperties: React.FC<StructurePropertiesProps> = ({ compon
               >
                 {children.length > 0 ? (
                   children.map((container, index) => (
-                    <SortableItem key={container.id} id={container.id} index={index} onRemove={removeContainer} />
+                    <SortableItem
+                      key={container.id}
+                      id={container.id}
+                      index={index}
+                      onRemove={removeContainer}
+                    />
                   ))
                 ) : (
                   <div className="p-4 text-center text-sm text-gray-500">
@@ -155,130 +193,6 @@ export const StructureProperties: React.FC<StructurePropertiesProps> = ({ compon
               </div>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Email-wide settings */}
-      <div className="border-t border-gray-200 pt-6 space-y-4">
-        <h3 className="text-lg font-semibold text-gray-800">Email Settings</h3>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email Width
-          </label>
-          <input
-            type="text"
-            value={component.props.emailWidth || '600px'}
-            onChange={(e) => handlePropChange('emailWidth', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
-            Email Background Color
-          </label>
-          <input
-            type="color"
-            value={component.props.emailBackgroundColor || '#f4f4f4'}
-            onChange={(e) => handlePropChange('emailBackgroundColor', e.target.value)}
-            className="w-full h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
-            Content Background Color
-          </label>
-          <input
-            type="color"
-            value={component.props.backgroundColor || '#ffffff'}
-            onChange={(e) => handlePropChange('backgroundColor', e.target.value)}
-            className="w-full h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
-            Font Family
-          </label>
-          <select
-            value={component.props.fontFamily || 'Arial, sans-serif'}
-            onChange={(e) => handlePropChange('fontFamily', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="Arial, sans-serif">Arial</option>
-            <option value="Helvetica, sans-serif">Helvetica</option>
-            <option value="Georgia, serif">Georgia</option>
-            <option value="Times New Roman, serif">Times New Roman</option>
-            <option value="Verdana, sans-serif">Verdana</option>
-            <option value="Tahoma, sans-serif">Tahoma</option>
-          </select>
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
-            Default Font Size
-          </label>
-          <input
-            type="text"
-            value={component.props.fontSize || '14px'}
-            onChange={(e) => handlePropChange('fontSize', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="14px"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
-            Line Height
-          </label>
-          <input
-            type="text"
-            value={component.props.lineHeight || '1.5'}
-            onChange={(e) => handlePropChange('lineHeight', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="1.5"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
-            Default Text Color
-          </label>
-          <input
-            type="color"
-            value={component.props.textColor || '#333333'}
-            onChange={(e) => handlePropChange('textColor', e.target.value)}
-            className="w-full h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
-            Link Color
-          </label>
-          <input
-            type="color"
-            value={component.props.linkColor || '#007bff'}
-            onChange={(e) => handlePropChange('linkColor', e.target.value)}
-            className="w-full h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
-            Email Alignment
-          </label>
-          <select
-            value={component.props.align || 'center'}
-            onChange={(e) => handlePropChange('align', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="left">Left</option>
-            <option value="center">Center</option>
-            <option value="right">Right</option>
-          </select>
         </div>
       </div>
     </div>

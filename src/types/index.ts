@@ -93,6 +93,7 @@ export type HeadingComponent = CanvasComponent & {
 export type ButtonComponent = CanvasComponent & {
   type: 'Button';
   props: {
+    buttonText?: string;
     text?: string;
     url?: string;
     backgroundColor?: string;
@@ -101,6 +102,11 @@ export type ButtonComponent = CanvasComponent & {
     borderRadius?: string;
     width?: string;
     align?: 'left' | 'center' | 'right';
+    paddingTop?: string;
+    paddingRight?: string;
+    paddingBottom?: string;
+    paddingLeft?: string;
+    color?: string;
   };
 };
 

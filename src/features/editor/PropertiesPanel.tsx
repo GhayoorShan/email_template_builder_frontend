@@ -1,20 +1,22 @@
-import { Suspense } from 'react';
+import { Suspense } from "react";
 import { useStore } from "../../store";
-import { useShallow } from 'zustand/react/shallow';
+import { useShallow } from "zustand/react/shallow";
 import { GeneralProperties } from "./GeneralProperties";
 import { StyledPropertiesPanel } from "../../components/ui/PropertiesPanel";
 import { componentRegistry } from "../../config/componentRegistry";
 
 export function PropertiesPanel() {
-  const {
-    activeComponent,
-    updateComponent,
-  } = useStore(
+  const { selectedId, components, updateComponent } = useStore(
     useShallow((state) => ({
-      activeComponent: state.activeId ? state.findComponent(state.activeId) : undefined,
+      selectedId: state.selectedId,
+      components: state.components,
       updateComponent: state.updateComponent,
     }))
   );
+
+  const activeComponent = selectedId
+    ? components.find((c) => c.id === selectedId)
+    : null;
 
   if (!activeComponent) {
     return (
@@ -37,19 +39,25 @@ export function PropertiesPanel() {
     }
 
     const onUpdate = (updates: any) => {
-      updateComponent(activeComponent.id, updates);
+      // If the updates contain props, update them properly
+      if ("props" in updates) {
+        updateComponent(activeComponent.id, {
+          props: { ...activeComponent.props, ...updates.props },
+        });
+      } else {
+        // For components that don't use the props structure
+        updateComponent(activeComponent.id, updates);
+      }
     };
 
     return (
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div>Loading properties...</div>}>
         <PropertiesComponent component={activeComponent} onUpdate={onUpdate} />
       </Suspense>
     );
   };
 
   return (
-    <StyledPropertiesPanel>
-      {renderPropertiesForm()}
-    </StyledPropertiesPanel>
+    <StyledPropertiesPanel>{renderPropertiesForm()}</StyledPropertiesPanel>
   );
 }

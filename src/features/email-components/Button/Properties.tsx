@@ -12,8 +12,9 @@ export function ButtonProperties({ component }: ButtonPropertiesProps) {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    const key = name as keyof ButtonComponent;
-    updateComponent(component.id, { [key]: value });
+    updateComponent(component.id, {
+      props: { ...component.props, [name]: value },
+    });
   };
 
   return (
@@ -26,7 +27,7 @@ export function ButtonProperties({ component }: ButtonPropertiesProps) {
           type="text"
           name="buttonText"
           className="mt-1 block w-full rounded-md bg-slate-50 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
-          value={component.buttonText}
+          value={component.props.buttonText || ""}
           onChange={handleInputChange}
         />
       </div>
@@ -36,7 +37,7 @@ export function ButtonProperties({ component }: ButtonPropertiesProps) {
           type="text"
           name="url"
           className="mt-1 block w-full rounded-md bg-slate-50 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
-          value={component.url}
+          value={component.props.url || ""}
           onChange={handleInputChange}
         />
       </div>
@@ -47,7 +48,7 @@ export function ButtonProperties({ component }: ButtonPropertiesProps) {
         <select
           name="align"
           className="mt-1 block w-full rounded-md bg-slate-50 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
-          value={component.align}
+          value={component.props.align || "left"}
           onChange={handleInputChange}
         >
           <option value="left">Left</option>
@@ -66,7 +67,7 @@ export function ButtonProperties({ component }: ButtonPropertiesProps) {
               type="text"
               name="paddingTop"
               className="block w-full rounded-md bg-slate-50 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
-              value={component.paddingTop}
+              value={component.props.paddingTop || ""}
               onChange={handleInputChange}
             />
           </div>
@@ -76,7 +77,7 @@ export function ButtonProperties({ component }: ButtonPropertiesProps) {
               type="text"
               name="paddingRight"
               className="block w-full rounded-md bg-slate-50 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
-              value={component.paddingRight}
+              value={component.props.paddingRight || ""}
               onChange={handleInputChange}
             />
           </div>
@@ -86,7 +87,7 @@ export function ButtonProperties({ component }: ButtonPropertiesProps) {
               type="text"
               name="paddingBottom"
               className="block w-full rounded-md bg-slate-50 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
-              value={component.paddingBottom}
+              value={component.props.paddingBottom || ""}
               onChange={handleInputChange}
             />
           </div>
@@ -96,7 +97,7 @@ export function ButtonProperties({ component }: ButtonPropertiesProps) {
               type="text"
               name="paddingLeft"
               className="block w-full rounded-md bg-slate-50 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
-              value={component.paddingLeft}
+              value={component.props.paddingLeft || ""}
               onChange={handleInputChange}
             />
           </div>
@@ -110,7 +111,7 @@ export function ButtonProperties({ component }: ButtonPropertiesProps) {
           type="color"
           name="backgroundColor"
           className="mt-1 block w-full h-10 rounded-md bg-slate-50 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
-          value={component.backgroundColor}
+          value={component.props.backgroundColor || "#ffffff"}
           onChange={handleInputChange}
         />
       </div>
@@ -122,7 +123,7 @@ export function ButtonProperties({ component }: ButtonPropertiesProps) {
           type="text"
           name="borderRadius"
           className="mt-1 block w-full rounded-md bg-slate-50 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
-          value={component.borderRadius}
+          value={component.props.borderRadius || ""}
           onChange={handleInputChange}
         />
       </div>
@@ -134,7 +135,7 @@ export function ButtonProperties({ component }: ButtonPropertiesProps) {
           type="color"
           name="color"
           className="mt-1 block w-full h-10 rounded-md bg-slate-50 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"
-          value={component.color}
+          value={component.props.color || "#000000"}
           onChange={handleInputChange}
         />
       </div>
