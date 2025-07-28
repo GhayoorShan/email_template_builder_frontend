@@ -82,7 +82,7 @@ const DraggablePreset: React.FC<{ preset: LayoutPreset }> = ({ preset }) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: preset.id,
     data: {
-      type: "Structure",
+      type: "Container",
       isNew: true,
       preset: {
         columns: preset.columns,

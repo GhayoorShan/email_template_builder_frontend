@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand';
 import { nanoid } from 'nanoid';
 import type { CanvasComponent } from '../types';
 import type { StoreState } from './index';
+import { componentRegistry } from '../config/componentRegistry';
 
 // --- Helper Functions (originally in store.ts) ---
 
@@ -83,7 +84,7 @@ export interface CanvasSlice {
     type: CanvasComponent['type'],
     parentId: string | null,
     index: number,
-    preconfigured?: CanvasComponent
+    preconfigured?: CanvasComponent & { preset?: { columns: number; widths: string[] } }
   ) => void;
   moveComponent: (
     componentId: string,
@@ -153,9 +154,13 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
     return findComponent(get().components, id);
   },
 
-  setSelectedId: (id) => set({ selectedId: id }),
+  setSelectedId: (id) => {
+    set({ selectedId: id });
+  },
 
-  setDropIndicatorId: (id) => set({ dropIndicatorId: id }),
+  setDropIndicatorId: (id) => {
+    set({ dropIndicatorId: id });
+  },
 
   addComponent: (type, parentId, index, preconfigured) => {
     const id = nanoid();
@@ -168,243 +173,30 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
         parentId
       };
     } else {
-      // Helper function to create a column with a component inside it
-      const createColumnWithComponent = (component: CanvasComponent): CanvasComponent => {
-        const columnId = nanoid();
-        const column: CanvasComponent = {
-          id: columnId,
-          parentId: component.parentId,
-          type: 'Column',
-          children: [component],
-          props: {
-            width: '100%',
-            backgroundColor: 'transparent',
-            paddingTop: '0',
-            paddingRight: '0',
-            paddingBottom: '0',
-            paddingLeft: '0'
-          }
-        };
-        
-        // Update the component's parentId to point to the new column
-        component.parentId = columnId;
-        
-        return column;
+      const defaultProps = componentRegistry[type]?.defaultProps;
+      newComponent = {
+        id,
+        type,
+        parentId,
+        props: defaultProps?.props || {},
+        children: 'children' in (defaultProps || {}) ? defaultProps.children : [],
       };
+    }
 
-      // Default props logic
-      switch (type) {
-          case 'Text': {
-              const textComponent: CanvasComponent = {
-                id,
-                parentId: null, // Will be set by createColumnWithComponent
-                type,
-                props: {
-                  text: 'Some text',
-                  align: 'left',
-                  paddingTop: '10px',
-                  paddingRight: '20px',
-                  paddingBottom: '10px',
-                  paddingLeft: '20px',
-                  color: '#000000',
-                  fontSize: '14px',
-                  lineHeight: '1.5',
-                },
-              };
-              // Wrap text in a column
-              newComponent = createColumnWithComponent(textComponent);
-              break;
-          }
-          case 'Button': {
-              const buttonComponent: CanvasComponent = {
-                id,
-                parentId: null, // Will be set by createColumnWithComponent
-                type,
-                props: {
-                  buttonText: 'Click me',
-                  url: '#',
-                  backgroundColor: '#007bff',
-                  textColor: '#ffffff',
-                  borderRadius: '4px',
-                  align: 'center',
-                  paddingTop: '15px',
-                  paddingRight: '25px',
-                  paddingBottom: '15px',
-                  paddingLeft: '25px',
-                },
-              };
-              // Wrap button in a column
-              newComponent = createColumnWithComponent(buttonComponent);
-              break;
-          }
-          case 'Image': {
-              const imageComponent: CanvasComponent = {
-                id,
-                parentId: null, // Will be set by createColumnWithComponent
-                type,
-                props: {
-                  src: 'https://via.placeholder.com/150',
-                  align: 'center',
-                },
-              };
-              // Wrap image in a column
-              newComponent = createColumnWithComponent(imageComponent);
-              break;
-          }
-          case 'Structure': {
-              newComponent = {
-                id,
-                parentId,
-                type,
-                children: [],
-                props: {
-                  backgroundColor: '#ffffff',
-                  padding: '0px',
-                  emailWidth: '600px',
-                  emailBackgroundColor: '#f4f4f4',
-                  fontFamily: 'Arial, sans-serif',
-                  fontSize: '14px',
-                  lineHeight: '1.5',
-                  textColor: '#333333',
-                  linkColor: '#007bff',
-                  maxWidth: '600px',
-                  align: 'center',
-                  containerGap: '20px',
-                  containerPadding: {
-                    top: '0px',
-                    right: '0px',
-                    bottom: '0px',
-                    left: '0px',
-                  },
-                },
-              };
-              break;
-          }
-          case 'Container': {
-              newComponent = {
-                id,
-                parentId,
-                type,
-                children: [],
-                props: {
-                  backgroundColor: '#ffffff',
-                  padding: '20px',
-                  width: '100%',
-                  textAlign: 'left',
-                  borderWidth: '0px',
-                  borderColor: '#ffffff',
-                  borderRadius: '0px',
-                  fullWidth: false,
-                  direction: 'ltr',
-                },
-              };
-              break;
-          }
-          case 'Divider': {
-              const dividerComponent: CanvasComponent = {
-                id,
-                parentId: null, // Will be set by createColumnWithComponent
-                type,
-                props: {
-                  borderStyle: 'solid',
-                  borderWidth: '1px',
-                  borderColor: '#cccccc',
-                  width: '100%',
-                  padding: '10px 0',
-                },
-              };
-              // Wrap divider in a column
-              newComponent = createColumnWithComponent(dividerComponent);
-              break;
-          }
-          case 'SocialMedia': {
-              newComponent = {
-                id,
-                parentId,
-                type,
-                props: {
-                  alignment: 'center',
-                  iconSize: '32px',
-                  iconSpacing: '10px',
-                  icons: [
-                    { platform: 'facebook', url: '#', altText: 'Facebook' },
-                    { platform: 'twitter', url: '#', altText: 'Twitter' },
-                    { platform: 'instagram', url: '#', altText: 'Instagram' },
-                  ],
-                },
-              };
-              break;
-          }
-          case 'Menu': {
-              newComponent = {
-                id,
-                parentId,
-                type,
-                props: {
-                  alignment: 'center',
-                  itemPadding: '10px',
-                  itemSpacing: '20px',
-                  textColor: '#000000',
-                  hoverTextColor: '#007bff',
-                  items: [
-                    { text: 'Home', url: '#' },
-                    { text: 'About', url: '#' },
-                    { text: 'Contact', url: '#' },
-                  ],
-                },
-              };
-              break;
-          }
-          case 'Column': {
-              newComponent = {
-                id,
-                parentId,
-                type,
-                children: [],
-                props: {
-                  width: '100%',
-                  backgroundColor: 'transparent',
-                  paddingTop: '0',
-                  paddingRight: '0',
-                  paddingBottom: '0',
-                  paddingLeft: '0'
-                }
-              };
-              break;
-          }
-          case 'Stripe': {
-              newComponent = {
-                id,
-                parentId,
-                type,
-                children: [],
-                props: {
-                  backgroundColor: '#ffffff',
-                  padding: '0px',
-                  stripeType: 'content'
-                }
-              };
-              break;
-          }
-          case 'Heading': {
-              const headingComponent: CanvasComponent = {
-                id,
-                parentId: null, // Will be set by createColumnWithComponent
-                type,
-                props: {
-                  text: 'Heading',
-                  level: 1,
-                  align: 'left',
-                  color: '#000000',
-                },
-              };
-              // Wrap heading in a column
-              newComponent = createColumnWithComponent(headingComponent);
-              break;
-          }
-          default:
-              throw new Error(`Unknown component type: ${type}`);
-      }
+    // Handle layout presets for Container components
+    if (newComponent.type === 'Container' && preconfigured?.preset) {
+      const { columns, widths } = preconfigured.preset;
+      // Create Column children with proper width properties
+      (newComponent as any).children = Array.from({ length: columns }, (_, i) => ({
+        id: nanoid(),
+        type: 'Column',
+        parentId: newComponent.id,
+        props: {
+          ...componentRegistry.Column.defaultProps.props,
+          width: widths[i] || '100%', // Default to 100% if width not specified
+        },
+        children: [],
+      }));
     }
 
     const newComponents = addComponentToParent(
@@ -414,7 +206,7 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
       index
     );
 
-    set({ components: newComponents });
+    set({ components: newComponents, selectedId: newComponent.id });
     if ('saveToHistory' in get()) {
       (get() as StoreState).saveToHistory();
     }

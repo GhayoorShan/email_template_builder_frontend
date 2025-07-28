@@ -19,15 +19,23 @@ export const Structure: React.FC<StructureProps> = ({
   const isSelected = selectedId === component.id;
 
   // Calculate total width to enforce 100% limit
-  const totalWidth =
-    component.children?.reduce((total, child) => {
-      const width = parseInt(child.props.width || "100");
-      return total + width;
-    }, 0) || 0;
+  // Only process children that have a width property (typically Column components)
+  const columnChildren = component.children?.filter(child => 
+    child?.props?.width !== undefined && child?.props?.width !== null
+  ) || [];
+  
+  const totalWidth = columnChildren.reduce((total, child) => {
+    const width = parseInt(String(child?.props?.width || "100"), 10) || 100;
+    return total + (isNaN(width) ? 0 : width);
+  }, 0);
 
   // Adjust widths if total exceeds 100%
   const adjustedChildren = component.children?.map((child) => {
-    if (totalWidth > 100) {
+    // Skip if child or child.props is undefined
+    if (!child || !child.props) return child;
+    
+    // Only adjust width for children that have a width property
+    if (child.props.width !== undefined && totalWidth > 100) {
       const currentWidth = parseInt(child.props.width || "100");
       const adjustedWidth = Math.floor((currentWidth / totalWidth) * 100);
       return {
@@ -76,7 +84,7 @@ export const Structure: React.FC<StructureProps> = ({
                 } ${component.props.containerPadding?.bottom || "0px"} ${
                   component.props.containerPadding?.left || "0px"
                 }`,
-                width: `${child.props.width || "100%"}`,
+                width: child?.props?.width ? `${child.props.width}` : "100%",
                 paddingLeft: "10px",
                 paddingRight: "10px",
                 boxSizing: "border-box",

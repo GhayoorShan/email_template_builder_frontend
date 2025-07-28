@@ -45,6 +45,9 @@ const StructureRenderer = React.lazy(() => import('../features/email-components/
 const ContainerProperties = React.lazy(() => import('../features/email-components/structureComponents/Container/Properties').then(module => ({ default: module.ContainerProperties })));
 const ContainerRenderer = React.lazy(() => import('../features/email-components/structureComponents/Container/Renderer').then(module => ({ default: module.Container })));
 
+const ColumnRenderer = React.lazy(() => import('../features/email-components/structureComponents/Column/Renderer').then(module => ({ default: module.Column })));
+const ColumnProperties = React.lazy(() => import('../features/email-components/structureComponents/Column/Properties').then(module => ({ default: module.ColumnProperties })));
+
 // Stripe components
 const StripeProperties = React.lazy(() => import('../features/email-components/structureComponents/Stripe/Properties').then(module => ({ default: module.StripeProperties })));
 const StripeRenderer = React.lazy(() => import('../features/email-components/structureComponents/Stripe/Renderer').then(module => ({ default: module.Stripe })));
@@ -223,6 +226,21 @@ export const componentRegistry: { [key: string]: ComponentConfig<AnyComponent> }
         fullWidth: false,
         direction: 'ltr',
         textAlign: 'left'
+      }
+    },
+    isDraggable: false,
+  },
+  Column: {
+    type: 'Column',
+    renderer: ColumnRenderer,
+    properties: ColumnProperties,
+    icon: Box,
+    defaultProps: {
+      props: {
+        width: '100%',
+        backgroundColor: '#ffffff',
+        padding: '10px',
+        verticalAlign: 'top',
       }
     },
     isDraggable: false,
