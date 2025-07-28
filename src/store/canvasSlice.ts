@@ -194,7 +194,7 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
 
       // Default props logic
       switch (type) {
-          case 'Text':
+          case 'Text': {
               const textComponent: CanvasComponent = {
                 id,
                 parentId: null, // Will be set by createColumnWithComponent
@@ -203,16 +203,19 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
                   text: 'Some text',
                   align: 'left',
                   paddingTop: '10px',
-                  paddingRight: '10px',
+                  paddingRight: '20px',
                   paddingBottom: '10px',
-                  paddingLeft: '10px',
+                  paddingLeft: '20px',
                   color: '#000000',
+                  fontSize: '14px',
+                  lineHeight: '1.5',
                 },
               };
               // Wrap text in a column
               newComponent = createColumnWithComponent(textComponent);
               break;
-          case 'Button':
+          }
+          case 'Button': {
               const buttonComponent: CanvasComponent = {
                 id,
                 parentId: null, // Will be set by createColumnWithComponent
@@ -220,20 +223,21 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
                 props: {
                   buttonText: 'Click me',
                   url: '#',
-                  align: 'center',
-                  paddingTop: '10px',
-                  paddingRight: '10px',
-                  paddingBottom: '10px',
-                  paddingLeft: '10px',
                   backgroundColor: '#007bff',
-                  borderRadius: '5px',
-                  color: '#ffffff',
+                  textColor: '#ffffff',
+                  borderRadius: '4px',
+                  align: 'center',
+                  paddingTop: '15px',
+                  paddingRight: '25px',
+                  paddingBottom: '15px',
+                  paddingLeft: '25px',
                 },
               };
               // Wrap button in a column
               newComponent = createColumnWithComponent(buttonComponent);
               break;
-          case 'Image':
+          }
+          case 'Image': {
               const imageComponent: CanvasComponent = {
                 id,
                 parentId: null, // Will be set by createColumnWithComponent
@@ -246,7 +250,8 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
               // Wrap image in a column
               newComponent = createColumnWithComponent(imageComponent);
               break;
-          case 'Structure':
+          }
+          case 'Structure': {
               newComponent = {
                 id,
                 parentId,
@@ -263,11 +268,19 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
                   textColor: '#333333',
                   linkColor: '#007bff',
                   maxWidth: '600px',
-                  align: 'center'
-                }
+                  align: 'center',
+                  containerGap: '20px',
+                  containerPadding: {
+                    top: '0px',
+                    right: '0px',
+                    bottom: '0px',
+                    left: '0px',
+                  },
+                },
               };
               break;
-          case 'Container':
+          }
+          case 'Container': {
               newComponent = {
                 id,
                 parentId,
@@ -276,16 +289,18 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
                 props: {
                   backgroundColor: '#ffffff',
                   padding: '20px',
+                  width: '100%',
+                  textAlign: 'left',
                   borderWidth: '0px',
                   borderColor: '#ffffff',
                   borderRadius: '0px',
                   fullWidth: false,
                   direction: 'ltr',
-                  textAlign: 'left'
-                }
+                },
               };
               break;
-          case 'Divider':
+          }
+          case 'Divider': {
               const dividerComponent: CanvasComponent = {
                 id,
                 parentId: null, // Will be set by createColumnWithComponent
@@ -301,7 +316,8 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
               // Wrap divider in a column
               newComponent = createColumnWithComponent(dividerComponent);
               break;
-          case 'SocialMedia':
+          }
+          case 'SocialMedia': {
               newComponent = {
                 id,
                 parentId,
@@ -318,7 +334,8 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
                 },
               };
               break;
-          case 'Menu':
+          }
+          case 'Menu': {
               newComponent = {
                 id,
                 parentId,
@@ -337,7 +354,8 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
                 },
               };
               break;
-          case 'Column':
+          }
+          case 'Column': {
               newComponent = {
                 id,
                 parentId,
@@ -353,7 +371,22 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
                 }
               };
               break;
-          case 'Heading':
+          }
+          case 'Stripe': {
+              newComponent = {
+                id,
+                parentId,
+                type,
+                children: [],
+                props: {
+                  backgroundColor: '#ffffff',
+                  padding: '0px',
+                  stripeType: 'content'
+                }
+              };
+              break;
+          }
+          case 'Heading': {
               const headingComponent: CanvasComponent = {
                 id,
                 parentId: null, // Will be set by createColumnWithComponent
@@ -368,6 +401,7 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
               // Wrap heading in a column
               newComponent = createColumnWithComponent(headingComponent);
               break;
+          }
           default:
               throw new Error(`Unknown component type: ${type}`);
       }
@@ -382,7 +416,7 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
 
     set({ components: newComponents });
     if ('saveToHistory' in get()) {
-      (get() as any).saveToHistory();
+      (get() as StoreState).saveToHistory();
     }
   },
 
@@ -404,7 +438,7 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
 
     set({ components: newComponents, selectedId: componentId });
     if ('saveToHistory' in get()) {
-      (get() as any).saveToHistory();
+      (get() as StoreState).saveToHistory();
     }
   },
 
@@ -423,7 +457,7 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
     }
     set({ components: update(components) });
     if ('saveToHistory' in get()) {
-      (get() as any).saveToHistory();
+      (get() as StoreState).saveToHistory();
     }
   },
 
@@ -476,7 +510,7 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
 
     set({ components: insert(get().components) });
     if ('saveToHistory' in get()) {
-      (get() as any).saveToHistory();
+      (get() as StoreState).saveToHistory();
     }
   },
 
@@ -503,7 +537,7 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
 
     set(state => ({ components: recursiveSet(state.components) }));
     if ('saveToHistory' in get()) {
-      (get() as any).saveToHistory();
+      (get() as StoreState).saveToHistory();
     }
   },
 });

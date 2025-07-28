@@ -1,9 +1,10 @@
 // Base component type that all components extend
 export type CanvasComponent = {
   id: string;
-  type: 'Structure' | 'Container' | 'Column' | 'Text' | 'Heading' | 'Button' | 'Image' | 'Divider' | 'SocialMedia' | 'Menu';
+  type: 'Stripe' | 'Structure' | 'Container' | 'Column' | 'Text' | 'Heading' | 'Button' | 'Image' | 'Divider' | 'SocialMedia' | 'Menu';
   parentId: string | null;
   children?: CanvasComponent[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props: Record<string, any>;
 };
 
@@ -156,6 +157,14 @@ export type SocialMediaComponent = CanvasComponent & {
   };
 };
 
+// Stripe: Top-level email section
+export type StripeComponent = CanvasComponent & {
+  type: 'Stripe';
+  props: LayoutProps & {
+    stripeType?: 'header' | 'content' | 'footer' | 'info';
+  };
+};
+
 export type MenuComponent = CanvasComponent & {
   type: 'Menu';
   props: {
@@ -173,6 +182,7 @@ export type MenuComponent = CanvasComponent & {
 
 // Union type of all component types
 export type AnyComponent = 
+  | StripeComponent
   | StructureComponent
   | ContainerComponent
   | ColumnComponent

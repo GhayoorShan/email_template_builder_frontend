@@ -109,6 +109,37 @@ const DraggablePreset: React.FC<{ preset: LayoutPreset }> = ({ preset }) => {
   );
 };
 
+const DraggableStripe: React.FC = () => {
+  const { attributes, listeners, setNodeRef } = useDraggable({
+    id: "stripe-preset",
+    data: {
+      type: "Stripe",
+      isNew: true,
+    },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 cursor-grab active:cursor-grabbing"
+    >
+      <div className="flex flex-col gap-3">
+        <div className="mb-2">
+          <div className="w-full h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
+            <span className="text-gray-500 font-medium">Stripe</span>
+          </div>
+        </div>
+        <div>
+          <h3 className="font-medium text-sm text-gray-900">Stripe</h3>
+          <p className="text-xs text-gray-500">Top-level email section</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 interface FlyoutPanelProps {
   isOpen: boolean;
   onClose?: () => void;
@@ -138,10 +169,20 @@ export const FlyoutPanel: React.FC<FlyoutPanelProps> = ({
         </button>
       </div>
 
-      <div className="p-4 space-y-4">
-        {layoutPresets.map((preset) => (
-          <DraggablePreset key={preset.id} preset={preset} />
-        ))}
+      <div className="p-4 space-y-6">
+        <div>
+          <h3 className="text-sm font-medium text-gray-900 mb-2">Email Sections</h3>
+          <DraggableStripe />
+        </div>
+        
+        <div>
+          <h3 className="text-sm font-medium text-gray-900 mb-2">Layout Presets</h3>
+          <div className="space-y-4">
+            {layoutPresets.map((preset) => (
+              <DraggablePreset key={preset.id} preset={preset} />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

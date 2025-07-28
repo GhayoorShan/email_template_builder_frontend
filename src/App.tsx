@@ -155,6 +155,22 @@ function App() {
           structure.children = containers;
           addComponent(structure.type, null, 0, structure);
         }
+        // For Stripe components
+        else if (componentType === "Stripe") {
+          const stripeId = nanoid();
+          const stripe: CanvasComponent = {
+            id: stripeId,
+            type: "Stripe",
+            parentId: null,
+            children: [],
+            props: {
+              backgroundColor: "#ffffff",
+              padding: "0px",
+              stripeType: "content",
+            },
+          };
+          addComponent(stripe.type, null, 0, stripe);
+        }
         // For regular components
         else if (overId === "canvas-root" || overId === "root") {
           addComponent(componentType as CanvasComponent["type"], "root", 0);

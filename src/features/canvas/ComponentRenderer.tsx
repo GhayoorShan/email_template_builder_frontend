@@ -45,9 +45,25 @@ const ColumnContainer: React.FC<ContainerProps> = ({ component, children }) => {
   );
 };
 
+const StripeContainer: React.FC<ContainerProps> = ({ component, children }) => {
+  return (
+    <div className="p-4 bg-gray-50 rounded-lg border border-gray-300">
+      <div className="text-xs font-medium text-gray-500 mb-1">Stripe ({component.props.stripeType || 'content'})</div>
+      <SortableContext items={'children' in component && component.children ? component.children.map(c => c.id) : []} strategy={verticalListSortingStrategy}>
+        {children}
+        {'children' in component && component.children?.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-24 text-gray-500 bg-white rounded-md border-2 border-dashed border-gray-300">
+            <p className="text-sm">Drop structures here</p>
+          </div>
+        )}
+      </SortableContext>
+    </div>
+  );
+};
+
 const containerMap: { [key: string]: React.FC<ContainerProps> } = {
   Structure: StructureContainer,
-
+  Stripe: StripeContainer,
 
   Column: ColumnContainer,
 };

@@ -1,9 +1,34 @@
 import type { AnyComponent } from '../types';
 
-export function generateMjml(components: AnyComponent[], structureProps: any = {}): string {
+interface StructureProps {
+  fontFamily?: string;
+  fontSize?: string;
+  lineHeight?: string;
+  textColor?: string;
+  backgroundColor?: string;
+  linkColor?: string;
+  emailWidth?: string;
+  emailBackgroundColor?: string;
+  maxWidth?: string;
+  align?: string;
+}
+
+export function generateMjml(components: AnyComponent[], structureProps: StructureProps = {}): string {
   const generateComponentMjml = (component: AnyComponent): string => {
     switch (component.type) {
-      case 'Structure':
+      case 'Stripe': {
+        // Stripe is a top-level container that wraps structures
+        return `
+          <mj-wrapper
+            padding="${component.props.padding || '0px'}"
+            background-color="${component.props.backgroundColor || '#ffffff'}"
+          >
+            ${component.children?.map(child => generateComponentMjml(child)).join('') || ''}
+          </mj-wrapper>
+        `;
+      }
+
+      case 'Structure': {
         // Handle container gap using mj-spacer
         const containerGap = component.props.containerGap || '20px';
         const containerPadding = component.props.containerPadding || {
@@ -23,8 +48,9 @@ export function generateMjml(components: AnyComponent[], structureProps: any = {
             ${index < array.length - 1 ? `<mj-spacer height="${containerGap}" />` : ''}
           </mj-wrapper>
         `).join('') || '';
+      }
 
-      case 'Container':
+      case 'Container': {
         return `
           <mj-section 
             background-color="${component.props.backgroundColor || '#ffffff'}"
@@ -38,8 +64,9 @@ export function generateMjml(components: AnyComponent[], structureProps: any = {
             ${component.children?.map(child => generateComponentMjml(child)).join('') || ''}
           </mj-section>
         `;
+      }
 
-      case 'Column':
+      case 'Column': {
         return `
           <mj-column 
             width="${component.props.width || '100%'}"
@@ -50,8 +77,9 @@ export function generateMjml(components: AnyComponent[], structureProps: any = {
             ${component.children?.map(child => generateComponentMjml(child)).join('') || ''}
           </mj-column>
         `;
+      }
 
-      case 'Text':
+      case 'Text': {
         return `
           <mj-text 
             padding="${component.props.paddingTop || '10px'} ${component.props.paddingRight || '20px'} ${component.props.paddingBottom || '10px'} ${component.props.paddingLeft || '20px'}"
@@ -63,8 +91,9 @@ export function generateMjml(components: AnyComponent[], structureProps: any = {
             ${component.props.content || ''}
           </mj-text>
         `;
+      }
 
-      case 'Button':
+      case 'Button': {
         return `
           <mj-button 
             background-color="${component.props.backgroundColor || '#007bff'}"
@@ -79,8 +108,9 @@ export function generateMjml(components: AnyComponent[], structureProps: any = {
             ${component.props.text || 'Button'}
           </mj-button>
         `;
+      }
 
-      case 'Image':
+      case 'Image': {
         return `
           <mj-image 
             src="${component.props.src || ''}" 
@@ -92,8 +122,9 @@ export function generateMjml(components: AnyComponent[], structureProps: any = {
             ${component.props.linkUrl ? `href="${component.props.linkUrl}"` : ''}
           />
         `;
+      }
 
-      case 'Divider':
+      case 'Divider': {
         return `
           <mj-divider 
             border-width="${component.props.height || '1px'}" 
@@ -102,8 +133,9 @@ export function generateMjml(components: AnyComponent[], structureProps: any = {
             padding="${component.props.paddingTop || '10px'} 0 ${component.props.paddingBottom || '10px'} 0"
           />
         `;
+      }
 
-      case 'SocialMedia':
+      case 'SocialMedia': {
         return `
           <mj-social 
             mode="horizontal"
@@ -119,8 +151,9 @@ export function generateMjml(components: AnyComponent[], structureProps: any = {
             `).join('')}
           </mj-social>
         `;
+      }
 
-      case 'Menu':
+      case 'Menu': {
         return `
           <mj-navbar 
             align="${component.props.alignment || 'center'}"
@@ -128,16 +161,17 @@ export function generateMjml(components: AnyComponent[], structureProps: any = {
           >
             ${(component.props.items || []).map(item => `
               <mj-navbar-link
-                color="${component.props.textColor || '#000000'}"
-                padding="${component.props.itemSpacing || '15px'}"
-                font-size="14px"
                 href="${item.url}"
+                color="${component.props.textColor || '#000000'}"
+                padding="${component.props.itemPadding || '10px'}"
+                css-class="navbar-link"
               >
                 ${item.text}
               </mj-navbar-link>
             `).join('')}
           </mj-navbar>
         `;
+      }
 
       default:
         console.warn(`Unsupported component type: ${component.type}`);
