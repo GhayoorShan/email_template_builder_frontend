@@ -82,7 +82,8 @@ export interface CanvasSlice {
   addComponent: (
     type: CanvasComponent['type'],
     parentId: string | null,
-    index: number
+    index: number,
+    preconfigured?: CanvasComponent
   ) => void;
   moveComponent: (
     componentId: string,
@@ -99,31 +100,51 @@ export interface CanvasSlice {
   setDropIndicatorId: (id: string | null) => void;
 }
 
+const defaultStructure = {
+  id: 'default-structure',
+  type: 'Structure' as const,
+  parentId: null,
+  children: [
+    {
+      id: 'default-container',
+      type: 'Container' as const,
+      parentId: 'default-structure',
+      children: [],
+      props: {
+        backgroundColor: '#ffffff',
+        padding: '20px',
+        width: '100%',
+        textAlign: 'left'
+      }
+    }
+  ],
+  props: {
+    backgroundColor: '#ffffff',
+    padding: '0px',
+    emailWidth: '600px',
+    emailBackgroundColor: '#f4f4f4',
+    fontFamily: 'Arial, sans-serif',
+    fontSize: '14px',
+    lineHeight: '1.5',
+    textColor: '#333333',
+    linkColor: '#007bff',
+    maxWidth: '600px',
+    align: 'center',
+    containerGap: '20px',
+    containerPadding: {
+      top: '0px',
+      right: '0px',
+      bottom: '0px',
+      left: '0px',
+    }
+  }
+};
+
 export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = (
   set,
   get
 ) => ({
-  components: [
-    {
-      id: 'root',
-      type: 'Structure',
-      parentId: null,
-      children: [],
-      props: {
-        backgroundColor: '#ffffff',
-        padding: '0px',
-        emailWidth: '600px',
-        emailBackgroundColor: '#f4f4f4',
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
-        lineHeight: '1.5',
-        textColor: '#333333',
-        linkColor: '#007bff',
-        maxWidth: '600px',
-        align: 'center'
-      }
-    },
-  ],
+  components: [defaultStructure],
   selectedId: null,
   modules: [],
   dropIndicatorId: null,
@@ -136,212 +157,220 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
 
   setDropIndicatorId: (id) => set({ dropIndicatorId: id }),
 
-  addComponent: (type, parentId, index) => {
+  addComponent: (type, parentId, index, preconfigured) => {
     const id = nanoid();
     let newComponent: CanvasComponent;
 
-    // Helper function to create a column with a component inside it
-    const createColumnWithComponent = (component: CanvasComponent): CanvasComponent => {
-      const columnId = nanoid();
-      const column: CanvasComponent = {
-        id: columnId,
-        parentId: component.parentId,
-        type: 'Column',
-        children: [component],
-        props: {
-          width: '100%',
-          backgroundColor: 'transparent',
-          paddingTop: '0',
-          paddingRight: '0',
-          paddingBottom: '0',
-          paddingLeft: '0'
-        }
+    if (preconfigured) {
+      newComponent = {
+        ...preconfigured,
+        id: preconfigured.id || id,
+        parentId
       };
-      
-      // Update the component's parentId to point to the new column
-      component.parentId = columnId;
-      
-      return column;
-    };
+    } else {
+      // Helper function to create a column with a component inside it
+      const createColumnWithComponent = (component: CanvasComponent): CanvasComponent => {
+        const columnId = nanoid();
+        const column: CanvasComponent = {
+          id: columnId,
+          parentId: component.parentId,
+          type: 'Column',
+          children: [component],
+          props: {
+            width: '100%',
+            backgroundColor: 'transparent',
+            paddingTop: '0',
+            paddingRight: '0',
+            paddingBottom: '0',
+            paddingLeft: '0'
+          }
+        };
+        
+        // Update the component's parentId to point to the new column
+        component.parentId = columnId;
+        
+        return column;
+      };
 
-    // Default props logic
-    switch (type) {
-        case 'Text':
-            const textComponent: CanvasComponent = {
-              id,
-              parentId: null, // Will be set by createColumnWithComponent
-              type,
-              props: {
-                text: 'Some text',
-                align: 'left',
-                paddingTop: '10px',
-                paddingRight: '10px',
-                paddingBottom: '10px',
-                paddingLeft: '10px',
-                color: '#000000',
-              },
-            };
-            // Wrap text in a column
-            newComponent = createColumnWithComponent(textComponent);
-            break;
-        case 'Button':
-            const buttonComponent: CanvasComponent = {
-              id,
-              parentId: null, // Will be set by createColumnWithComponent
-              type,
-              props: {
-                buttonText: 'Click me',
-                url: '#',
-                align: 'center',
-                paddingTop: '10px',
-                paddingRight: '10px',
-                paddingBottom: '10px',
-                paddingLeft: '10px',
-                backgroundColor: '#007bff',
-                borderRadius: '5px',
-                color: '#ffffff',
-              },
-            };
-            // Wrap button in a column
-            newComponent = createColumnWithComponent(buttonComponent);
-            break;
-        case 'Image':
-            const imageComponent: CanvasComponent = {
-              id,
-              parentId: null, // Will be set by createColumnWithComponent
-              type,
-              props: {
-                src: 'https://via.placeholder.com/150',
-                align: 'center',
-              },
-            };
-            // Wrap image in a column
-            newComponent = createColumnWithComponent(imageComponent);
-            break;
-        case 'Structure':
-            newComponent = {
-              id,
-              parentId,
-              type,
-              children: [],
-              props: {
-                backgroundColor: '#ffffff',
-                padding: '0px',
-                emailWidth: '600px',
-                emailBackgroundColor: '#f4f4f4',
-                fontFamily: 'Arial, sans-serif',
-                fontSize: '14px',
-                lineHeight: '1.5',
-                textColor: '#333333',
-                linkColor: '#007bff',
-                maxWidth: '600px',
-                align: 'center'
-              }
-            };
-            break;
-        case 'Container':
-            newComponent = {
-              id,
-              parentId,
-              type,
-              children: [],
-              props: {
-                backgroundColor: '#ffffff',
-                padding: '20px',
-                borderWidth: '0px',
-                borderColor: '#ffffff',
-                borderRadius: '0px',
-                fullWidth: false,
-                direction: 'ltr',
-                textAlign: 'left'
-              }
-            };
-            break;
-        case 'Divider':
-            const dividerComponent: CanvasComponent = {
-              id,
-              parentId: null, // Will be set by createColumnWithComponent
-              type,
-              props: {
-                borderStyle: 'solid',
-                borderWidth: '1px',
-                borderColor: '#cccccc',
-                width: '100%',
-                padding: '10px 0',
-              },
-            };
-            // Wrap divider in a column
-            newComponent = createColumnWithComponent(dividerComponent);
-            break;
-        case 'SocialMedia':
-            newComponent = {
-              id,
-              parentId,
-              type,
-              props: {
-                alignment: 'center',
-                iconSize: '32px',
-                iconSpacing: '10px',
-                icons: [
-                  { platform: 'facebook', url: '#', altText: 'Facebook' },
-                  { platform: 'twitter', url: '#', altText: 'Twitter' },
-                  { platform: 'instagram', url: '#', altText: 'Instagram' },
-                ],
-              },
-            };
-            break;
-        case 'Menu':
-            newComponent = {
-              id,
-              parentId,
-              type,
-              props: {
-                alignment: 'center',
-                itemPadding: '10px',
-                itemSpacing: '20px',
-                textColor: '#000000',
-                hoverTextColor: '#007bff',
-                items: [
-                  { text: 'Home', url: '#' },
-                  { text: 'About', url: '#' },
-                  { text: 'Contact', url: '#' },
-                ],
-              },
-            };
-            break;
-        case 'Column':
-            newComponent = {
-              id,
-              parentId,
-              type,
-              children: [],
-              props: {
-                width: '100%',
-                backgroundColor: 'transparent',
-                paddingTop: '0',
-                paddingRight: '0',
-                paddingBottom: '0',
-                paddingLeft: '0'
-              }
-            };
-            break;
-        case 'Heading':
-            const headingComponent: CanvasComponent = {
-              id,
-              parentId: null, // Will be set by createColumnWithComponent
-              type,
-              props: {
-                text: 'Heading',
-                level: 1,
-                align: 'left',
-                color: '#000000',
-              },
-            };
-            // Wrap heading in a column
-            newComponent = createColumnWithComponent(headingComponent);
-            break;
-        default:
-            throw new Error(`Unknown component type: ${type}`);
+      // Default props logic
+      switch (type) {
+          case 'Text':
+              const textComponent: CanvasComponent = {
+                id,
+                parentId: null, // Will be set by createColumnWithComponent
+                type,
+                props: {
+                  text: 'Some text',
+                  align: 'left',
+                  paddingTop: '10px',
+                  paddingRight: '10px',
+                  paddingBottom: '10px',
+                  paddingLeft: '10px',
+                  color: '#000000',
+                },
+              };
+              // Wrap text in a column
+              newComponent = createColumnWithComponent(textComponent);
+              break;
+          case 'Button':
+              const buttonComponent: CanvasComponent = {
+                id,
+                parentId: null, // Will be set by createColumnWithComponent
+                type,
+                props: {
+                  buttonText: 'Click me',
+                  url: '#',
+                  align: 'center',
+                  paddingTop: '10px',
+                  paddingRight: '10px',
+                  paddingBottom: '10px',
+                  paddingLeft: '10px',
+                  backgroundColor: '#007bff',
+                  borderRadius: '5px',
+                  color: '#ffffff',
+                },
+              };
+              // Wrap button in a column
+              newComponent = createColumnWithComponent(buttonComponent);
+              break;
+          case 'Image':
+              const imageComponent: CanvasComponent = {
+                id,
+                parentId: null, // Will be set by createColumnWithComponent
+                type,
+                props: {
+                  src: 'https://via.placeholder.com/150',
+                  align: 'center',
+                },
+              };
+              // Wrap image in a column
+              newComponent = createColumnWithComponent(imageComponent);
+              break;
+          case 'Structure':
+              newComponent = {
+                id,
+                parentId,
+                type,
+                children: [],
+                props: {
+                  backgroundColor: '#ffffff',
+                  padding: '0px',
+                  emailWidth: '600px',
+                  emailBackgroundColor: '#f4f4f4',
+                  fontFamily: 'Arial, sans-serif',
+                  fontSize: '14px',
+                  lineHeight: '1.5',
+                  textColor: '#333333',
+                  linkColor: '#007bff',
+                  maxWidth: '600px',
+                  align: 'center'
+                }
+              };
+              break;
+          case 'Container':
+              newComponent = {
+                id,
+                parentId,
+                type,
+                children: [],
+                props: {
+                  backgroundColor: '#ffffff',
+                  padding: '20px',
+                  borderWidth: '0px',
+                  borderColor: '#ffffff',
+                  borderRadius: '0px',
+                  fullWidth: false,
+                  direction: 'ltr',
+                  textAlign: 'left'
+                }
+              };
+              break;
+          case 'Divider':
+              const dividerComponent: CanvasComponent = {
+                id,
+                parentId: null, // Will be set by createColumnWithComponent
+                type,
+                props: {
+                  borderStyle: 'solid',
+                  borderWidth: '1px',
+                  borderColor: '#cccccc',
+                  width: '100%',
+                  padding: '10px 0',
+                },
+              };
+              // Wrap divider in a column
+              newComponent = createColumnWithComponent(dividerComponent);
+              break;
+          case 'SocialMedia':
+              newComponent = {
+                id,
+                parentId,
+                type,
+                props: {
+                  alignment: 'center',
+                  iconSize: '32px',
+                  iconSpacing: '10px',
+                  icons: [
+                    { platform: 'facebook', url: '#', altText: 'Facebook' },
+                    { platform: 'twitter', url: '#', altText: 'Twitter' },
+                    { platform: 'instagram', url: '#', altText: 'Instagram' },
+                  ],
+                },
+              };
+              break;
+          case 'Menu':
+              newComponent = {
+                id,
+                parentId,
+                type,
+                props: {
+                  alignment: 'center',
+                  itemPadding: '10px',
+                  itemSpacing: '20px',
+                  textColor: '#000000',
+                  hoverTextColor: '#007bff',
+                  items: [
+                    { text: 'Home', url: '#' },
+                    { text: 'About', url: '#' },
+                    { text: 'Contact', url: '#' },
+                  ],
+                },
+              };
+              break;
+          case 'Column':
+              newComponent = {
+                id,
+                parentId,
+                type,
+                children: [],
+                props: {
+                  width: '100%',
+                  backgroundColor: 'transparent',
+                  paddingTop: '0',
+                  paddingRight: '0',
+                  paddingBottom: '0',
+                  paddingLeft: '0'
+                }
+              };
+              break;
+          case 'Heading':
+              const headingComponent: CanvasComponent = {
+                id,
+                parentId: null, // Will be set by createColumnWithComponent
+                type,
+                props: {
+                  text: 'Heading',
+                  level: 1,
+                  align: 'left',
+                  color: '#000000',
+                },
+              };
+              // Wrap heading in a column
+              newComponent = createColumnWithComponent(headingComponent);
+              break;
+          default:
+              throw new Error(`Unknown component type: ${type}`);
+      }
     }
 
     const newComponents = addComponentToParent(
@@ -399,13 +428,28 @@ export const createCanvasSlice: StateCreator<StoreState, [], [], CanvasSlice> = 
   },
 
   removeComponent: (id) => {
-    set((state: StoreState) => ({
-      components: removeComponentFromParent(state.components, id),
-      selectedId: state.selectedId === id ? null : state.selectedId,
-    }));
-    if ('saveToHistory' in get()) {
-      (get() as any).saveToHistory();
+    const component = get().findComponent(id);
+    if (!component) return;
+
+    // If this is a container and it's the only child of a structure, prevent deletion
+    const parent = get().findComponent(component.parentId || '');
+    if (component.type === 'Container' && parent?.type === 'Structure') {
+      if (parent.children?.length === 1) {
+        return; // Don't allow deletion of the last container
+      }
     }
+
+    const removeComponentAndChildren = (components: CanvasComponent[], id: string): CanvasComponent[] => {
+      return components.filter(c => {
+        if (c.id === id) return false;
+        if (c.children) {
+          c.children = removeComponentAndChildren(c.children, id);
+        }
+        return true;
+      });
+    };
+
+    set({ components: removeComponentAndChildren(get().components, id) });
   },
 
   duplicateComponent: (id) => {

@@ -14,7 +14,7 @@ export interface ComponentConfig<T extends CanvasComponent = CanvasComponent> {
   preview?: string;
 }
 
-import { Type, Heading1, MousePointerClick, Image as ImageIcon, Minus, Share2, Menu as MenuIcon, Box, Columns } from 'lucide-react';
+import { Type, Heading1, MousePointerClick, Image as ImageIcon, Minus, Share2, Menu as MenuIcon, Box } from 'lucide-react';
 
 // Lazy load components
 const TextRenderer = React.lazy(() => import('../features/email-components/Text/Renderer').then(module => ({ default: module.Text })));
@@ -43,10 +43,7 @@ const StructureProperties = React.lazy(() => import('../features/email-component
 const StructureRenderer = React.lazy(() => import('../features/email-components/structureComponents/Structure/Renderer').then(module => ({ default: module.default })));
 
 const ContainerProperties = React.lazy(() => import('../features/email-components/structureComponents/Container/Properties').then(module => ({ default: module.ContainerProperties })));
-const ContainerRenderer = React.lazy(() => import('../features/email-components/structureComponents/Container/Renderer').then(module => ({ default: module.default })));
-
-const ColumnRenderer = React.lazy(() => import('../features/email-components/structureComponents/Column/Renderer').then(module => ({ default: module.default })));
-const ColumnProperties = React.lazy(() => import('../features/email-components/structureComponents/Column/Properties').then(module => ({ default: module.ColumnProperties })));
+const ContainerRenderer = React.lazy(() => import('../features/email-components/structureComponents/Container/Renderer').then(module => ({ default: module.Container })));
 
 export const componentRegistry: { [key: string]: ComponentConfig<AnyComponent> } = {
   Text: {
@@ -184,7 +181,6 @@ export const componentRegistry: { [key: string]: ComponentConfig<AnyComponent> }
     properties: StructureProperties,
     icon: Box,
     defaultProps: {
-      children: [],
       props: {
         backgroundColor: '#ffffff',
         padding: '0px',
@@ -196,11 +192,17 @@ export const componentRegistry: { [key: string]: ComponentConfig<AnyComponent> }
         textColor: '#333333',
         linkColor: '#007bff',
         maxWidth: '600px',
-        align: 'center'
+        align: 'center',
+        containerGap: '20px',
+        containerPadding: {
+          top: '0px',
+          right: '0px',
+          bottom: '0px',
+          left: '0px',
+        }
       }
     },
     isDraggable: false,
-    preview: '',
   },
   Container: {
     type: 'Container',
@@ -208,7 +210,6 @@ export const componentRegistry: { [key: string]: ComponentConfig<AnyComponent> }
     properties: ContainerProperties,
     icon: Box,
     defaultProps: {
-      children: [],
       props: {
         backgroundColor: '#ffffff',
         padding: '20px',
@@ -220,27 +221,7 @@ export const componentRegistry: { [key: string]: ComponentConfig<AnyComponent> }
         textAlign: 'left'
       }
     },
-    isDraggable: true,
-    preview: '',
-  },
-  Column: {
-    type: 'Column',
-    renderer: ColumnRenderer,
-    properties: ColumnProperties,
-    icon: Columns,
-    defaultProps: {
-      children: [],
-      props: {
-        width: '100%',
-        backgroundColor: 'transparent',
-        paddingTop: '0',
-        paddingRight: '0',
-        paddingBottom: '0',
-        paddingLeft: '0',
-        verticalAlign: 'top'
-      }
-    },
     isDraggable: false,
-    preview: '',
   },
+ 
 };

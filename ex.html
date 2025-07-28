@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redesigned Header & Menu Demo</title>
+
+    <!-- ================================================================= -->
+    <!--  CSS STYLES                                                       -->
+    <!-- ================================================================= -->
+    <style>
+        /* ------------------------- */
+        /* --- VARIABLES & RESET --- */
+        /* ------------------------- */
+        :root {
+            --primary-color: #007bff;
+            --text-color: #111;
+            --bg-color: #ffffff;
+            --header-height: 80px;
+            --border-color: #e0e0e0;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --transition-speed: 0.3s;
+        }
+
+        /* Basic Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        button {
+            font-family: inherit;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* ------------------- */
+        /* --- HEADER BASE --- */
+        /* ------------------- */
+        .site-header {
+            background-color: var(--bg-color);
+            height: var(--header-height);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: background-color var(--transition-speed);
+        }
+
+        .header-container {
+            max-width: 1400px;
+            height: 100%;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .site-logo {
+            display: flex;
+            align-items: center;
+            height: 45%;
+            z-index: 101;
+            /* Above mobile nav background */
+        }
+
+        .site-logo svg {
+            height: 100%;
+            width: auto;
+            color: var(--text-color);
+        }
+
+        /* ------------------- */
+        /* --- NAVIGATION ---- */
+        /* ------------------- */
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-item {
+            position: relative;
+            font-weight: 500;
+        }
+
+        .nav-item>a {
+            padding: 10px 0;
+            position: relative;
+            transition: color var(--transition-speed);
+        }
+
+        .nav-item>a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary-color);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform var(--transition-speed) ease-in-out;
+        }
+
+        .nav-item>a:hover,
+        .nav-item>a:focus {
+            color: var(--primary-color);
+        }
+
+        .nav-item>a:hover::after,
+        .nav-item>a:focus::after {
+            transform: scaleX(1);
+        }
+
+        /* ------------------- */
+        /* --- DROPDOWNS ----- */
+        /* ------------------- */
+        .has-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .dropdown-toggle {
+            width: 20px;
+            height: 20px;
+            display: grid;
+            place-items: center;
+            transition: transform var(--transition-speed);
+        }
+
+        .dropdown-toggle::before {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid currentColor;
+            transition: border-color var(--transition-speed);
+        }
+
+        .dropdown-toggle:hover {
+            color: var(--primary-color);
+        }
+
+        .dropdown-toggle[aria-expanded="true"] {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 20px);
+            left: 50%;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            min-width: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translate(-50%, 10px);
+            transition: opacity var(--transition-speed), visibility var(--transition-speed), transform var(--transition-speed);
+        }
+
+        .has-dropdown:hover .dropdown-menu,
+        .dropdown-toggle:focus+.dropdown-menu,
+        .dropdown-menu:focus-within {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, 0);
+        }
+
+        .dropdown-menu a {
+            padding: 10px 15px;
+            border-radius: 6px;
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+        }
+
+        .dropdown-menu a:hover,
+        .dropdown-menu a:focus {
+            background-color: #f0f0f0;
+            color: var(--primary-color);
+        }
+
+        /* Megamenu Specific Styles */
+        .megamenu {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            width: max-content;
+            max-width: 800px;
+            padding: 30px;
+            gap: 40px;
+            left: 0;
+            /* Align with parent nav item */
+            transform: translateX(0) translateY(10px);
+        }
+
+        .has-dropdown:hover .megamenu,
+        .dropdown-toggle:focus+.megamenu {
+            transform: translateX(0) translateY(0);
+        }
+
+        .megamenu-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .megamenu-heading {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        /* ----------------------- */
+        /* --- HEADER ACTIONS ---- */
+        /* ----------------------- */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .action-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            transition: background-color var(--transition-speed);
+        }
+
+        .action-button:hover,
+        .action-button:focus {
+            background-color: #f0f0f0;
+        }
+
+        .action-button svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .lang-button {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        /* --------------------------- */
+        /* --- MOBILE RESPONSIVENESS --- */
+        /* --------------------------- */
+        .mobile-nav-toggle {
+            display: none;
+        }
+
+        @media (max-width: 1024px) {
+            .header-actions {
+                /* Hide desktop actions to simplify mobile header */
+                display: none;
+            }
+
+            .main-nav {
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: 100%;
+                height: 100vh;
+                background-color: var(--bg-color);
+                transform: translateX(100%);
+                transition: transform var(--transition-speed) ease-in-out;
+                padding: calc(var(--header-height) + 40px) 40px 40px;
+                overflow-y: auto;
+            }
+
+            .main-nav.is-active {
+                transform: translateX(0);
+            }
+
+            .nav-links {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .nav-item {
+                width: 100%;
+            }
+
+            .nav-item>a {
+                display: block;
+                padding: 15px 0;
+                font-size: 1.5rem;
+            }
+
+            .nav-item>a::after {
+                display: none;
+                /* Hide underline on mobile */
+            }
+
+            .has-dropdown {
+                flex-wrap: wrap;
+                justify-content: space-between;
+            }
+
+            .has-dropdown>a {
+                flex-grow: 1;
+            }
+
+            .dropdown-toggle {
+                width: 44px;
+                height: 44px;
+                margin-right: -10px;
+                /* Align with padding */
+            }
+
+            .dropdown-menu,
+            .megamenu {
+                position: static;
+                display: none;
+                /* Hidden by default */
+                flex-direction: column;
+                width: 100%;
+                border: none;
+                box-shadow: none;
+                padding: 10px 0 10px 20px;
+                transform: none;
+                opacity: 1;
+                visibility: visible;
+                background-color: transparent;
+            }
+
+            .dropdown-menu[data-open="true"],
+            .megamenu[data-open="true"] {
+                display: grid;
+                /* Use grid for megamenu columns */
+            }
+
+            .megamenu {
+                grid-template-columns: 1fr;
+            }
+
+
+            /* --- Mobile Toggle Button --- */
+            .mobile-nav-toggle {
+                display: block;
+                z-index: 101;
+                width: 44px;
+                height: 44px;
+                position: relative;
+            }
+
+            .hamburger-box {
+                position: relative;
+                display: inline-block;
+                width: 24px;
+                height: 24px;
+            }
+
+            .hamburger-inner,
+            .hamburger-inner::before,
+            .hamburger-inner::after {
+                position: absolute;
+                width: 24px;
+                height: 3px;
+                background-color: var(--text-color);
+                border-radius: 3px;
+                transition: transform 0.22s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+            }
+
+            .hamburger-inner {
+                top: 50%;
+                transform: translateY(-50%);
+            }
+
+            .hamburger-inner::before,
+            .hamburger-inner::after {
+                content: '';
+            }
+
+            .hamburger-inner::before {
+                top: -8px;
+                transition: top 0.1s 0.25s ease-in, opacity 0.1s ease-in;
+            }
+
+            .hamburger-inner::after {
+                bottom: -8px;
+                transition: bottom 0.1s 0.25s ease-in, transform 0.22s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+            }
+
+            .mobile-nav-toggle[aria-expanded="true"] .hamburger-inner {
+                transform: rotate(225deg);
+                transition-delay: 0.12s;
+                transition-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+            }
+
+            .mobile-nav-toggle[aria-expanded="true"] .hamburger-inner::before {
+                top: 0;
+                opacity: 0;
+                transition: top 0.1s ease-out, opacity 0.1s 0.12s ease-out;
+            }
+
+            .mobile-nav-toggle[aria-expanded="true"] .hamburger-inner::after {
+                bottom: 0;
+                transform: rotate(-90deg);
+                transition: bottom 0.1s ease-out, transform 0.22s 0.12s cubic-bezier(0.215, 0.61, 0.355, 1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ================================================================= -->
+    <!--  HTML MARKUP                                                      -->
+    <!-- ================================================================= -->
+    <header class="site-header">
+        <div class="header-container">
+            <!-- Logo -->
+            <a href="#" class="site-logo" aria-label="Dubai Future Foundation - Homepage">
+                <!-- A much simpler, cleaner SVG. The original was excessively complex. -->
+                <svg viewBox="0 0 455 78.2" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M71.7,44.4c-14.3,0-25.9-5.8-25.9-12.9s11.6-12.9,25.9-12.9,25.9,5.8,25.9,12.9-11.6,12.9-25.9,12.9M56.2,5.6C27.6,5.6,4.4,17.1,4.4,31.4s23.2,25.9,51.8,25.9,51.8-11.6,51.8-25.9S84.8,5.6,56.2,5.6Z" />
+                    <path
+                        d="M140.9,44.2h-4.8c-4.3,0-6.8,2.6-6.8,6.4s2.5,6.4,6.8,6.4h4.8v-12.8Zm-2.9,10.9h-2.9c-2.6,0-2.9-1.7-2.9-4.1s.3-4,3.3-4h2.5v8.1Z" />
+                    <text x="150" y="58" font-family="Arial, sans-serif" font-size="18" font-weight="bold"
+                        fill="currentColor">DUBAI FUTURE</text>
+                </svg>
+            </a>
+
+            <!-- Mobile Menu Toggle Button -->
+            <button class="mobile-nav-toggle" aria-controls="main-navigation" aria-expanded="false">
+                <span class="sr-only">Menu</span>
+                <span class="hamburger-box">
+                    <span class="hamburger-inner"></span>
+                </span>
+            </button>
+
+            <!-- Main Navigation -->
+            <nav class="main-nav" id="main-navigation">
+                <ul class="nav-links">
+                    <li class="nav-item"><a href="#">HMC</a></li>
+                    <li class="nav-item"><a href="#">Research</a></li>
+
+                    <li class="nav-item has-dropdown">
+                        <a href="#">Initiatives</a>
+                        <button class="dropdown-toggle" aria-expanded="false"><span class="sr-only">Toggle Initiatives
+                                Submenu</span></button>
+                        <div class="dropdown-menu megamenu">
+                            <div class="megamenu-column">
+                                <h3 class="megamenu-heading">Future Design & Acceleration</h3>
+                                <a href="#">SandBox Dubai</a>
+                                <a href="#">Dubai Future Solutions</a>
+                                <a href="#">Dubai Centre for AI</a>
+                                <a href="#">AREA 2071</a>
+                                <a href="#">Dubai 10X</a>
+                            </div>
+                            <div class="megamenu-column">
+                                <h3 class="megamenu-heading">Future, Foresight & Imagination</h3>
+                                <a href="#">Dubai Future Forum</a>
+                                <a href="#">The Global 50</a>
+                                <a href="#">Dubai Future Councils</a>
+                            </div>
+                            <div class="megamenu-column">
+                                <h3 class="megamenu-heading">Capacity Building</h3>
+                                <a href="#">Dubai Future Academy</a>
+                                <a href="#">One Million Arab Coders</a>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item"><a href="#">Programmes</a></li>
+
+                    <li class="nav-item has-dropdown">
+                        <a href="#">About</a>
+                        <button class="dropdown-toggle" aria-expanded="false"><span class="sr-only">Toggle About
+                                Submenu</span></button>
+                        <div class="dropdown-menu">
+                            <a href="#">10 Years Ahead</a>
+                            <a href="#">Our Board of Trustees</a>
+                            <a href="#">Message From Our CEO</a>
+                            <a href="#">Join Our Team</a>
+                        </div>
+                    </li>
+                    <li class="nav-item"><a href="#">Reach Us</a></li>
+                </ul>
+            </nav>
+
+            <!-- Header Action Buttons -->
+            <div class="header-actions">
+                <button class="action-button lang-button" aria-label="Switch Language to Arabic">ع</button>
+                <button class="action-button search-button" aria-label="Open Search">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        viewBox="0 0 16 16">
+                        <path
+                            d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+                    </svg>
+                </button>
+                <button class="action-button profile-button" aria-label="Login or Register">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        viewBox="0 0 16 16">
+                        <path
+                            d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div style="height: 200vh; padding: 40px; text-align: center; max-width: 800px; margin: auto;">
+            <h1>Redesigned Header Demo</h1>
+            <p style="margin-top: 20px;">This page demonstrates the redesigned header and menu.</p>
+            <ul
+                style="text-align: left; margin-top: 30px; display: inline-block; list-style-type: disc; padding-left: 20px;">
+                <li>The header is sticky and will stay at the top as you scroll.</li>
+                <li>Hover over "Initiatives" or "About" to see the dropdown menus.</li>
+                <li>Resize your browser window to a smaller width (less than 1024px) to see the mobile version.</li>
+                <li>Click the hamburger icon on mobile to open and close the navigation.</li>
+            </ul>
+        </div>
+    </main>
+
+    <!-- ================================================================= -->
+    <!--  JAVASCRIPT                                                       -->
+    <!-- ================================================================= -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
+            const mainNav = document.querySelector('.main-nav');
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+
+            // --- 1. Mobile Navigation Toggle ---
+            if (mobileNavToggle) {
+                mobileNavToggle.addEventListener('click', () => {
+                    const isOpened = mobileNavToggle.getAttribute('aria-expanded') === 'true';
+                    mobileNavToggle.setAttribute('aria-expanded', !isOpened);
+                    mainNav.classList.toggle('is-active');
+                    // Prevent background scrolling when mobile menu is open
+                    document.body.style.overflow = mainNav.classList.contains('is-active') ? 'hidden' : '';
+                });
+            }
+
+            // --- 2. Dropdown Menu Toggle (for mobile/touch) ---
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', (e) => {
+                    // This is primarily for mobile where hover is not available
+                    if (window.innerWidth <= 1024) {
+                        e.preventDefault(); // Prevent link navigation on toggle click
+                        const dropdownMenu = toggle.nextElementSibling;
+                        const isOpened = toggle.getAttribute('aria-expanded') === 'true';
+
+                        // Close other open dropdowns in the mobile menu
+                        toggle.closest('.nav-links').querySelectorAll('.dropdown-toggle').forEach(otherToggle => {
+                            if (otherToggle !== toggle) {
+                                otherToggle.setAttribute('aria-expanded', 'false');
+                                otherToggle.nextElementSibling.setAttribute('data-open', 'false');
+                            }
+                        });
+
+                        // Toggle the current one
+                        toggle.setAttribute('aria-expanded', !isOpened);
+                        dropdownMenu.setAttribute('data-open', !isOpened);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

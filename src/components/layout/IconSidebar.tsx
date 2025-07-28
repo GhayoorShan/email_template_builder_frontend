@@ -1,5 +1,5 @@
 import React from "react";
-import { LayoutDashboard, Settings, User } from "lucide-react";
+import { Settings, LayoutDashboard } from "lucide-react";
 import { Tooltip } from "../ui/Tooltip";
 import { Draggable } from "../ui/Draggable";
 import { componentRegistry } from "../../config/componentRegistry";
@@ -21,12 +21,18 @@ export const IconSidebar: React.FC<IconSidebarProps> = ({
     }
   };
 
-  const structureComponent = {
-    id: "structure",
-    name: "Structure",
+  // Layout section is special - it only opens the flyout panel
+  const layoutSection = {
+    id: "layouts",
+    name: "Layouts",
     icon: LayoutDashboard,
-    description: "Add layout elements like columns and sections.",
+    description: "Add layout elements like columns and sections",
   };
+
+  // Filter out layout components from the registry
+  const draggableComponents = Object.entries(componentRegistry).filter(
+    ([_, config]) => !["Structure", "Container", "Column"].includes(config.type)
+  );
 
   return (
     <aside className="h-full bg-slate-900 border-r border-slate-800 flex flex-col items-center py-4 w-20 shadow-lg">
@@ -34,38 +40,40 @@ export const IconSidebar: React.FC<IconSidebarProps> = ({
       <div className="w-12 h-12 mb-8 flex items-center justify-center">
         <img src="/vite.svg" alt="Logo" className="w-10 h-10" />
       </div>
+
       {/* Grouped Icons */}
       <div className="flex flex-col gap-3 flex-1 items-center w-full">
-        {/* Structure */}
+        {/* Layout section - clickable only */}
         <Tooltip
-          key={structureComponent.id}
-          title={structureComponent.name}
-          description={structureComponent.description}
+          title={layoutSection.name}
+          description={layoutSection.description}
         >
           <button
-            onClick={() => handleButtonClick(structureComponent.id)}
-            className={`w-12 h-12 flex items-center justify-center rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 relative ${
-              activeCategory === structureComponent.id
+            onClick={() => handleButtonClick("layouts")}
+            className={`w-12 h-12 flex items-center justify-center rounded-lg transition-all duration-200 ease-in-out ${
+              activeCategory === "layouts"
                 ? "bg-blue-600 text-white ring-2 ring-blue-400"
                 : "bg-slate-800 text-slate-300 hover:bg-slate-700"
             }`}
           >
-            <structureComponent.icon size={28} />
+            <layoutSection.icon size={24} />
           </button>
         </Tooltip>
-        {/* Content/Other Components */}
-        <div className="flex flex-col gap-2 w-full items-center">
-          {Object.values(componentRegistry).map((comp) => {
-            if (!comp.icon || !comp.type) return null;
-            const Icon = comp.icon;
+
+        {/* Draggable component icons */}
+        <div className="flex flex-col gap-3">
+          {draggableComponents.map(([id, config]) => {
+            if (!config.icon) return null;
+            const Icon = config.icon;
+
             return (
               <Tooltip
-                key={comp.type}
-                title={comp.type}
-                description={`Add a ${comp.type} component.`}
+                key={id}
+                title={config.type}
+                description={`Add a ${config.type} component`}
               >
                 <div className="w-12 h-12">
-                  <Draggable id={comp.type}>
+                  <Draggable id={config.type}>
                     <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 cursor-grab active:cursor-grabbing">
                       <Icon size={24} />
                     </div>
@@ -76,21 +84,14 @@ export const IconSidebar: React.FC<IconSidebarProps> = ({
           })}
         </div>
       </div>
-      {/* Settings/Profile at the bottom */}
-      <div className="flex flex-col items-center gap-3 mt-8 mb-2">
-        <button
-          className="w-12 h-12 flex items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors"
-          title="Global Styles"
-        >
-          <Settings size={24} />
-        </button>
-        <button
-          className="w-12 h-12 flex items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors"
-          title="Profile"
-        >
-          <User size={24} />
-        </button>
-      </div>
+
+      {/* Settings at the bottom */}
+      <button
+        className="w-12 h-12 flex items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 mt-auto"
+        title="Settings"
+      >
+        <Settings size={24} />
+      </button>
     </aside>
   );
 };

@@ -1,166 +1,241 @@
-import React from 'react';
-import type { ContainerComponent, CanvasComponent } from '../../../types';
-import { useStore } from '../../../store';
-import { nanoid } from 'nanoid';
-import { Columns } from 'lucide-react';
+import React, { useState } from "react";
+import { useStore } from "../../../../store";
+import type { ContainerComponent } from "../../../../types";
 
 interface ContainerPropertiesProps {
   component: ContainerComponent;
 }
 
-export const ContainerProperties: React.FC<ContainerPropertiesProps> = ({ component }) => {
-  const { updateComponent, setChildren } = useStore();
+const TabNavigation: React.FC<{
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}> = ({ activeTab, onTabChange }) => (
+  <div className="border-b border-gray-200 mb-4">
+    <nav className="flex -mb-px">
+      {["Settings", "Styles"].map((tab) => (
+        <button
+          key={tab}
+          onClick={() => onTabChange(tab)}
+          className={`px-4 py-2 font-medium text-sm border-b-2 ${
+            activeTab === tab
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+          }`}
+        >
+          {tab}
+        </button>
+      ))}
+    </nav>
+  </div>
+);
 
-  const handlePropChange = (key: string, value: string | boolean) => {
+interface StepperInputProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  unit?: string;
+  min?: number;
+  max?: number;
+}
+
+const StepperInput: React.FC<StepperInputProps> = ({
+  label,
+  value,
+  onChange,
+  unit = "px",
+  min = 0,
+  max = 100,
+}) => {
+  const numericValue = parseInt(value) || 0;
+
+  return (
+    <div className="flex items-center justify-between">
+      <label className="text-sm text-gray-600">{label}</label>
+      <div className="flex items-center space-x-2">
+        <button
+          onClick={() => onChange(`${Math.max(min, numericValue - 1)}${unit}`)}
+          className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200"
+          disabled={numericValue <= min}
+        >
+          -
+        </button>
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-16 px-2 py-1 text-center border rounded"
+        />
+        <button
+          onClick={() => onChange(`${Math.min(max, numericValue + 1)}${unit}`)}
+          className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200"
+          disabled={numericValue >= max}
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export const ContainerProperties: React.FC<ContainerPropertiesProps> = ({
+  component,
+}) => {
+  const [activeTab, setActiveTab] = useState("Settings");
+  const updateComponent = useStore((state) => state.updateComponent);
+
+  const updateProps = (key: string, value: any) => {
     updateComponent(component.id, {
-      props: { ...component.props, [key]: value }
+      props: { ...component.props, [key]: value },
     });
   };
 
-  const handleLayoutChange = (widths: string[]) => {
-    const newColumns: CanvasComponent[] = widths.map(width => ({
-      id: nanoid(),
-      type: 'Column',
-      parentId: component.id,
-      children: [],
-      props: { width }
-    }));
-    setChildren(component.id, newColumns);
-  };
-
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-800">Container Settings</h3>
-      
-      {/* Background Color */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Background Color
-        </label>
-        <input
-          type="color"
-          value={component.props.backgroundColor || '#ffffff'}
-          onChange={(e) => handlePropChange('backgroundColor', e.target.value)}
-          className="w-full h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+    <div className="space-y-6 p-4">
+      <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Padding */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Padding
-        </label>
-        <input
-          type="text"
-          value={component.props.padding || '20px'}
-          onChange={(e) => handlePropChange('padding', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="20px"
-        />
-      </div>
+      {activeTab === "Settings" && (
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium text-gray-900">
+            Container Settings
+          </h3>
 
-      {/* Border Width */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Border Width
-        </label>
-        <input
-          type="text"
-          value={component.props.borderWidth || '0px'}
-          onChange={(e) => handlePropChange('borderWidth', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="0px"
-        />
-      </div>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="block text-sm text-gray-600">
+                Container Width
+              </label>
+              <input
+                type="text"
+                value={component.props.width || "100%"}
+                onChange={(e) => updateProps("width", e.target.value)}
+                className="w-full px-3 py-2 border rounded-md"
+              />
+            </div>
 
-      {/* Border Color */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Border Color
-        </label>
-        <input
-          type="color"
-          value={component.props.borderColor || '#ffffff'}
-          onChange={(e) => handlePropChange('borderColor', e.target.value)}
-          className="w-full h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+            <div className="space-y-2">
+              <label className="block text-sm text-gray-600">
+                Text Alignment
+              </label>
+              <select
+                value={component.props.textAlign || "left"}
+                onChange={(e) => updateProps("textAlign", e.target.value)}
+                className="w-full px-3 py-2 border rounded-md"
+              >
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
 
-      {/* Border Radius */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Border Radius
-        </label>
-        <input
-          type="text"
-          value={component.props.borderRadius || '0px'}
-          onChange={(e) => handlePropChange('borderRadius', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="0px"
-        />
-      </div>
+            <div className="space-y-2">
+              <label className="block text-sm text-gray-600">Direction</label>
+              <select
+                value={component.props.direction || "ltr"}
+                onChange={(e) => updateProps("direction", e.target.value)}
+                className="w-full px-3 py-2 border rounded-md"
+              >
+                <option value="ltr">Left to Right</option>
+                <option value="rtl">Right to Left</option>
+              </select>
+            </div>
 
-      {/* Full Width */}
-      <div>
-        <label className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            checked={component.props.fullWidth || false}
-            onChange={(e) => handlePropChange('fullWidth', e.target.checked)}
-            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
-          <span className="text-sm font-medium text-gray-700">Full Width</span>
-        </label>
-      </div>
-
-      {/* Direction */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Direction
-        </label>
-        <select
-          value={component.props.direction || 'ltr'}
-          onChange={(e) => handlePropChange('direction', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="ltr">Left to Right</option>
-          <option value="rtl">Right to Left</option>
-        </select>
-      </div>
-
-      {/* Text Align */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Text Alignment
-        </label>
-        <select
-          value={component.props.textAlign || 'left'}
-          onChange={(e) => handlePropChange('textAlign', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="left">Left</option>
-          <option value="center">Center</option>
-          <option value="right">Right</option>
-        </select>
-      </div>
-
-      {/* Column Layout */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Column Layout
-        </label>
-        <div className="grid grid-cols-4 gap-2">
-          <button onClick={() => handleLayoutChange(['100%'])} className="p-2 border rounded hover:bg-gray-100 flex items-center justify-center space-x-1"><Columns size={16} /><span>1</span></button>
-          <button onClick={() => handleLayoutChange(['50%', '50%'])} className="p-2 border rounded hover:bg-gray-100 flex items-center justify-center space-x-1"><Columns size={16} /><span>2</span></button>
-          <button onClick={() => handleLayoutChange(['33.33%', '33.33%', '33.33%'])} className="p-2 border rounded hover:bg-gray-100 flex items-center justify-center space-x-1"><Columns size={16} /><span>3</span></button>
-          <button onClick={() => handleLayoutChange(['25%', '25%', '25%', '25%'])} className="p-2 border rounded hover:bg-gray-100 flex items-center justify-center space-x-1"><Columns size={16} /><span>4</span></button>
-          <button onClick={() => handleLayoutChange(['25%', '75%'])} className="p-2 border rounded hover:bg-gray-100">25/75</button>
-          <button onClick={() => handleLayoutChange(['75%', '25%'])} className="p-2 border rounded hover:bg-gray-100">75/25</button>
-          <button onClick={() => handleLayoutChange(['33.33%', '66.67%'])} className="p-2 border rounded hover:bg-gray-100">33/67</button>
-          <button onClick={() => handleLayoutChange(['66.67%', '33.33%'])} className="p-2 border rounded hover:bg-gray-100">67/33</button>
+            <div className="space-y-2">
+              <label className="block text-sm text-gray-600">Padding</label>
+              <div className="grid grid-cols-2 gap-2">
+                <StepperInput
+                  label="Top"
+                  value={component.props.paddingTop || "0px"}
+                  onChange={(value) => updateProps("paddingTop", value)}
+                />
+                <StepperInput
+                  label="Right"
+                  value={component.props.paddingRight || "0px"}
+                  onChange={(value) => updateProps("paddingRight", value)}
+                />
+                <StepperInput
+                  label="Bottom"
+                  value={component.props.paddingBottom || "0px"}
+                  onChange={(value) => updateProps("paddingBottom", value)}
+                />
+                <StepperInput
+                  label="Left"
+                  value={component.props.paddingLeft || "0px"}
+                  onChange={(value) => updateProps("paddingLeft", value)}
+                />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
+      {activeTab === "Styles" && (
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium text-gray-900">Style Settings</h3>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="block text-sm text-gray-600">
+                Background Color
+              </label>
+              <input
+                type="color"
+                value={component.props.backgroundColor || "#ffffff"}
+                onChange={(e) => updateProps("backgroundColor", e.target.value)}
+                className="w-full h-8 rounded border"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm text-gray-600">
+                Border Width
+              </label>
+              <StepperInput
+                label="Width"
+                value={component.props.borderWidth || "0px"}
+                onChange={(value) => updateProps("borderWidth", value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm text-gray-600">
+                Border Color
+              </label>
+              <input
+                type="color"
+                value={component.props.borderColor || "#000000"}
+                onChange={(e) => updateProps("borderColor", e.target.value)}
+                className="w-full h-8 rounded border"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm text-gray-600">
+                Border Radius
+              </label>
+              <StepperInput
+                label="Radius"
+                value={component.props.borderRadius || "0px"}
+                onChange={(value) => updateProps("borderRadius", value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm text-gray-600">Full Width</label>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={component.props.fullWidth || false}
+                  onChange={(e) => updateProps("fullWidth", e.target.checked)}
+                  className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                />
+                <span className="ml-2 text-sm text-gray-600">
+                  Extend container to full width
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

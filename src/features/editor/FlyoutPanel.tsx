@@ -1,159 +1,147 @@
-import React, { useState, useEffect } from 'react';
-import { useDraggable } from '@dnd-kit/core';
-import { Box, Columns, Layout } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useDraggable } from "@dnd-kit/core";
+import { X } from "lucide-react";
 
-
-// Error Boundary Component
-interface LayoutComponent {
+interface LayoutPreset {
   id: string;
   name: string;
-  type: string;
-  icon: React.ReactNode;
   description: string;
+  columns: number;
+  widths: string[];
+  preview: JSX.Element;
 }
 
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('FlyoutPanel Error:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <div className="p-4 text-red-500">Something went wrong in this panel.</div>;
-    }
-    return this.props.children;
-  }
-}
-
-// Layout components for the flyout panel
-const layoutComponents: LayoutComponent[] = [
+const layoutPresets: LayoutPreset[] = [
   {
-    id: 'structure',
-    name: 'Structure',
-    type: 'Structure',
-    icon: <Layout className="w-6 h-6" />,
-    description: 'Basic email structure'
+    id: "single-column",
+    name: "1 Column",
+    description: "Full width single column",
+    columns: 1,
+    widths: ["100%"],
+    preview: (
+      <div className="w-full h-12 bg-gray-100 rounded border-2 border-dashed border-gray-300" />
+    ),
   },
   {
-    id: 'container',
-    name: 'Container',
-    type: 'Container',
-    icon: <Box className="w-6 h-6" />,
-    description: 'Content container with customizable layout'
+    id: "two-columns-equal",
+    name: "2 Columns",
+    description: "Two equal width columns",
+    columns: 2,
+    widths: ["50%", "50%"],
+    preview: (
+      <div className="flex gap-2 w-full h-12">
+        <div className="flex-1 bg-gray-100 rounded border-2 border-dashed border-gray-300" />
+        <div className="flex-1 bg-gray-100 rounded border-2 border-dashed border-gray-300" />
+      </div>
+    ),
   },
   {
-    id: 'column',
-    name: 'Column',
-    type: 'Column',
-    icon: <Columns className="w-6 h-6" />,
-    description: 'Column layout for content'
-  }
+    id: "three-columns-equal",
+    name: "3 Columns",
+    description: "Three equal width columns",
+    columns: 3,
+    widths: ["33.33%", "33.33%", "33.33%"],
+    preview: (
+      <div className="flex gap-2 w-full h-12">
+        <div className="flex-1 bg-gray-100 rounded border-2 border-dashed border-gray-300" />
+        <div className="flex-1 bg-gray-100 rounded border-2 border-dashed border-gray-300" />
+        <div className="flex-1 bg-gray-100 rounded border-2 border-dashed border-gray-300" />
+      </div>
+    ),
+  },
+  {
+    id: "two-columns-wide-narrow",
+    name: "2 Columns (70/30)",
+    description: "Two columns with wide/narrow split",
+    columns: 2,
+    widths: ["70%", "30%"],
+    preview: (
+      <div className="flex gap-2 w-full h-12">
+        <div className="w-[70%] bg-gray-100 rounded border-2 border-dashed border-gray-300" />
+        <div className="w-[30%] bg-gray-100 rounded border-2 border-dashed border-gray-300" />
+      </div>
+    ),
+  },
+  {
+    id: "three-columns-wide-narrow",
+    name: "3 Columns (50/25/25)",
+    description: "Three columns with one wide column",
+    columns: 3,
+    widths: ["50%", "25%", "25%"],
+    preview: (
+      <div className="flex gap-2 w-full h-12">
+        <div className="w-1/2 bg-gray-100 rounded border-2 border-dashed border-gray-300" />
+        <div className="w-1/4 bg-gray-100 rounded border-2 border-dashed border-gray-300" />
+        <div className="w-1/4 bg-gray-100 rounded border-2 border-dashed border-gray-300" />
+      </div>
+    ),
+  },
 ];
 
-const tabs = [
-  { key: 'structure', label: 'Layouts' },
-  { key: 'content', label: 'Content' },
-  { key: 'media', label: 'Media' },
-];
-
-interface FlyoutPanelProps {
-  isOpen: boolean;
-  activeTab: string;
-  onClose?: () => void;
-}
-
-const DraggableComponent = ({ component }: { component: LayoutComponent }) => {
+const DraggablePreset: React.FC<{ preset: LayoutPreset }> = ({ preset }) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
-    id: component.id,
+    id: preset.id,
     data: {
-      type: component.type,
-      isNew: true
-    }
+      type: "Structure",
+      isNew: true,
+      preset: {
+        columns: preset.columns,
+        widths: preset.widths,
+      },
+    },
   });
 
   return (
     <div
       ref={setNodeRef}
-      className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-grab active:cursor-grabbing transition-all hover:border-blue-400"
-      {...listeners}
       {...attributes}
+      {...listeners}
+      className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 cursor-grab active:cursor-grabbing"
     >
-      <div className="mb-3">{component.icon}</div>
-      <span className="text-sm font-medium text-gray-700 mb-1">
-        {component.name}
-      </span>
-      <p className="text-xs text-gray-500 text-center">
-        {component.description}
-      </p>
+      <div className="flex flex-col gap-3">
+        <div className="mb-2">{preset.preview}</div>
+        <div>
+          <h3 className="font-medium text-sm text-gray-900">{preset.name}</h3>
+          <p className="text-xs text-gray-500">{preset.description}</p>
+        </div>
+      </div>
     </div>
   );
 };
 
-const LayoutComponentsList = () => {
-  return (
-    <div className="grid gap-4">
-      {layoutComponents.map((comp) => (
-        <DraggableComponent key={comp.id} component={comp} />
-      ))}
-    </div>
-  );
-};
+interface FlyoutPanelProps {
+  isOpen: boolean;
+  onClose?: () => void;
+}
 
-export const FlyoutPanel: React.FC<FlyoutPanelProps> = ({ isOpen, activeTab }) => {
-  const [tab, setTab] = useState(activeTab || 'structure');
+export const FlyoutPanel: React.FC<FlyoutPanelProps> = ({
+  isOpen,
+  onClose,
+}) => {
   const [isClient, setIsClient] = useState(false);
-  
+
   useEffect(() => {
     setIsClient(true);
-    setTab(activeTab);
-  }, [activeTab]);
+  }, []);
 
   if (!isClient || !isOpen) return null;
 
   return (
-    <div className="w-64 h-full bg-white border-r border-gray-200 shadow-sm flex flex-col">
-      <div className="flex-shrink-0 flex border-b border-gray-200">
-        {tabs.map((tabItem) => (
-          <button
-            key={tabItem.key}
-            onClick={() => setTab(tabItem.key)}
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${
-              tab === tabItem.key
-                ? 'text-blue-600 border-b-2 border-blue-500'
-                : 'text-gray-500 hover:bg-gray-50'
-            }`}
-            aria-label={tabItem.label}
-          >
-            {tabItem.label}
-          </button>
-        ))}
+    <div className="fixed inset-y-0 left-20 w-80 bg-white shadow-xl z-50 border-r border-gray-200">
+      <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+        <h2 className="text-lg font-medium text-gray-900">Layout Presets</h2>
+        <button
+          onClick={onClose}
+          className="p-2 text-gray-400 hover:text-gray-500 rounded-full hover:bg-gray-100"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
-      <div className="flex-1 p-4 overflow-y-auto">
-        <ErrorBoundary>
-          {tab === 'structure' && <LayoutComponentsList />}
-          
-          {tab === 'content' && (
-            <div className="flex items-center justify-center h-40 text-gray-400">
-              <p>Content components coming soon</p>
-            </div>
-          )}
-          
-          {tab === 'media' && (
-            <div className="flex items-center justify-center h-40 text-gray-400">
-              <p>Media components coming soon</p>
-            </div>
-          )}
-        </ErrorBoundary>
+      <div className="p-4 space-y-4">
+        {layoutPresets.map((preset) => (
+          <DraggablePreset key={preset.id} preset={preset} />
+        ))}
       </div>
     </div>
   );

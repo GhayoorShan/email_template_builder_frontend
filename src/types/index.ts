@@ -39,6 +39,13 @@ export type StructureComponent = CanvasComponent & {
   props: LayoutProps & EmailSettings & {
     maxWidth?: string;
     align?: 'left' | 'center' | 'right';
+    containerGap?: string;
+    containerPadding?: {
+      top?: string;
+      right?: string;
+      bottom?: string;
+      left?: string;
+    };
   };
 };
 

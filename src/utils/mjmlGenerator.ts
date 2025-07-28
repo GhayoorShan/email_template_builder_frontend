@@ -4,22 +4,38 @@ export function generateMjml(components: AnyComponent[], structureProps: any = {
   const generateComponentMjml = (component: AnyComponent): string => {
     switch (component.type) {
       case 'Structure':
-        // The structure component itself doesn't render a wrapper, 
-        // this is handled by the main template body.
-        return `${component.children?.map(generateComponentMjml).join('') || ''}`;
+        // Handle container gap using mj-spacer
+        const containerGap = component.props.containerGap || '20px';
+        const containerPadding = component.props.containerPadding || {
+          top: '0px',
+          right: '0px',
+          bottom: '0px',
+          left: '0px'
+        };
+
+        // Add container gap between sections
+        return component.children?.map((child, index, array) => `
+          <mj-wrapper
+            padding="${containerPadding.top} ${containerPadding.right} ${containerPadding.bottom} ${containerPadding.left}"
+            background-color="transparent"
+          >
+            ${generateComponentMjml(child)}
+            ${index < array.length - 1 ? `<mj-spacer height="${containerGap}" />` : ''}
+          </mj-wrapper>
+        `).join('') || '';
 
       case 'Container':
         return `
           <mj-section 
             background-color="${component.props.backgroundColor || '#ffffff'}"
-            padding="${component.props.padding || '20px 0'}"
+            padding="${component.props.padding || '20px'}"
             ${component.props.borderWidth ? `border="${component.props.borderWidth} solid ${component.props.borderColor || '#000000'}"` : ''}
             ${component.props.borderRadius ? `border-radius="${component.props.borderRadius}"` : ''}
             ${component.props.fullWidth ? 'full-width="full-width"' : ''}
             direction="${component.props.direction || 'ltr'}"
             text-align="${component.props.textAlign || 'left'}"
           >
-            ${component.children?.map(generateComponentMjml).join('') || ''}
+            ${component.children?.map(child => generateComponentMjml(child)).join('') || ''}
           </mj-section>
         `;
 
@@ -31,7 +47,7 @@ export function generateMjml(components: AnyComponent[], structureProps: any = {
             padding="${component.props.paddingTop || '0'} ${component.props.paddingRight || '0'} ${component.props.paddingBottom || '0'} ${component.props.paddingLeft || '0'}"
             vertical-align="${component.props.verticalAlign || 'top'}"
           >
-            ${component.children?.map(generateComponentMjml).join('') || ''}
+            ${component.children?.map(child => generateComponentMjml(child)).join('') || ''}
           </mj-column>
         `;
 
@@ -87,23 +103,60 @@ export function generateMjml(components: AnyComponent[], structureProps: any = {
           />
         `;
 
+      case 'SocialMedia':
+        return `
+          <mj-social 
+            mode="horizontal"
+            align="${component.props.alignment || 'center'}"
+            icon-size="${component.props.iconSize || '32px'}"
+            padding="${component.props.padding || '10px 25px'}"
+            icon-padding="${component.props.iconSpacing || '10px'}"
+          >
+            ${(component.props.icons || []).map(icon => `
+              <mj-social-element name="${icon.platform}" href="${icon.url}">
+                ${icon.platform}
+              </mj-social-element>
+            `).join('')}
+          </mj-social>
+        `;
+
+      case 'Menu':
+        return `
+          <mj-navbar 
+            align="${component.props.alignment || 'center'}"
+            padding="${component.props.itemPadding || '10px'}"
+          >
+            ${(component.props.items || []).map(item => `
+              <mj-navbar-link
+                color="${component.props.textColor || '#000000'}"
+                padding="${component.props.itemSpacing || '15px'}"
+                font-size="14px"
+                href="${item.url}"
+              >
+                ${item.text}
+              </mj-navbar-link>
+            `).join('')}
+          </mj-navbar>
+        `;
+
       default:
         console.warn(`Unsupported component type: ${component.type}`);
         return '';
     }
   };
 
-  const mjmlContent = components.map(generateComponentMjml).join('\n');
-  
   const headStyles = `
     <mj-head>
       <mj-attributes>
         <mj-all font-family="${structureProps.fontFamily || 'Arial, sans-serif'}" />
         <mj-text font-size="${structureProps.fontSize || '14px'}" line-height="${structureProps.lineHeight || '1.5'}" color="${structureProps.textColor || '#333333'}" />
-        <mj-wrapper background-color="${structureProps.contentBackgroundColor || '#ffffff'}" />
+        <mj-section padding="0" background-color="transparent" />
+        <mj-wrapper padding="0" background-color="transparent" />
+        <mj-column padding="0" />
       </mj-attributes>
-      <mj-style>
-        a { color: ${structureProps.linkColor || '#007bff'} !important; }
+      <mj-style inline="inline">
+        .container { background-color: ${structureProps.backgroundColor || '#ffffff'}; }
+        a { color: ${structureProps.linkColor || '#007bff'} !important; text-decoration: none; }
       </mj-style>
     </mj-head>
   `;
@@ -112,7 +165,7 @@ export function generateMjml(components: AnyComponent[], structureProps: any = {
     <mjml>
       ${headStyles}
       <mj-body width="${structureProps.emailWidth || '600px'}" background-color="${structureProps.emailBackgroundColor || '#f4f4f4'}">
-        ${mjmlContent}
+        ${components.map(component => generateComponentMjml(component)).join('')}
       </mj-body>
     </mjml>
   `;
