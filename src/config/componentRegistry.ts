@@ -39,15 +39,14 @@ const MenuRenderer = React.lazy(() => import('../features/email-components/Menu/
 const MenuProperties = React.lazy(() => import('../features/email-components/Menu/Properties').then(module => ({ default: module.MenuProperties })));
 
 // Structure and Container components
+const StructureProperties = React.lazy(() => import('../features/email-components/structureComponents/Structure/Properties').then(module => ({ default: module.StructureProperties })));
+const StructureRenderer = React.lazy(() => import('../features/email-components/structureComponents/Structure/Renderer').then(module => ({ default: module.default })));
 
-const StructureProperties = React.lazy(() => import('../features/email-components/Structure/Properties').then(module => ({ default: module.StructureProperties })));
-const StructureRenderer = React.lazy(() => import('../features/email-components/Structure/Renderer').then(module => ({ default: module.default })));
+const ContainerProperties = React.lazy(() => import('../features/email-components/structureComponents/Container/Properties').then(module => ({ default: module.ContainerProperties })));
+const ContainerRenderer = React.lazy(() => import('../features/email-components/structureComponents/Container/Renderer').then(module => ({ default: module.default })));
 
-const ContainerProperties = React.lazy(() => import('../features/email-components/Container/Properties').then(module => ({ default: module.ContainerProperties })));
-const ContainerRenderer = React.lazy(() => import('../features/email-components/Container/Renderer').then(module => ({ default: module.default })));
-
-const ColumnRenderer = React.lazy(() => import('../features/email-components/Column/Renderer').then(module => ({ default: module.default })));
-const ColumnProperties = React.lazy(() => import('../features/email-components/Column/Properties').then(module => ({ default: module.ColumnProperties })));
+const ColumnRenderer = React.lazy(() => import('../features/email-components/structureComponents/Column/Renderer').then(module => ({ default: module.default })));
+const ColumnProperties = React.lazy(() => import('../features/email-components/structureComponents/Column/Properties').then(module => ({ default: module.ColumnProperties })));
 
 export const componentRegistry: { [key: string]: ComponentConfig<AnyComponent> } = {
   Text: {

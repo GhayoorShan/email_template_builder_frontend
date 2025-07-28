@@ -1,6 +1,6 @@
 import React from 'react';
-import type { StructureComponent } from '../../../types';
-import { ComponentRenderer } from '../../canvas/ComponentRenderer';
+import type { StructureComponent, CanvasComponent } from '../../../../types';
+import { ComponentRenderer } from '../../../canvas/ComponentRenderer';
 import { useDroppable } from '@dnd-kit/core';
 
 interface StructureProps {
@@ -40,7 +40,7 @@ export const Structure: React.FC<StructureProps> = ({ component, selectedId }) =
           textAlign: component.props.align || 'center',
         }}
       >
-        {component.children?.map((child) => (
+        {component.children?.map((child: CanvasComponent) => (
           <ComponentRenderer
             key={child.id}
             component={child}

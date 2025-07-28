@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDraggable } from '@dnd-kit/core';
+import { Box, Columns, Layout } from 'lucide-react';
 
 
 // Error Boundary Component
@@ -8,7 +9,7 @@ interface LayoutComponent {
   name: string;
   type: string;
   icon: React.ReactNode;
-  preview: React.ReactNode;
+  description: string;
 }
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
@@ -34,7 +35,29 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 // Layout components for the flyout panel
-const layoutComponents: LayoutComponent[] = [];
+const layoutComponents: LayoutComponent[] = [
+  {
+    id: 'structure',
+    name: 'Structure',
+    type: 'Structure',
+    icon: <Layout className="w-6 h-6" />,
+    description: 'Basic email structure'
+  },
+  {
+    id: 'container',
+    name: 'Container',
+    type: 'Container',
+    icon: <Box className="w-6 h-6" />,
+    description: 'Content container with customizable layout'
+  },
+  {
+    id: 'column',
+    name: 'Column',
+    type: 'Column',
+    icon: <Columns className="w-6 h-6" />,
+    description: 'Column layout for content'
+  }
+];
 
 const tabs = [
   { key: 'structure', label: 'Layouts' },
@@ -48,7 +71,7 @@ interface FlyoutPanelProps {
   onClose?: () => void;
 }
 
-const DraggableComponent = ({ component }: { component: typeof layoutComponents[0] }) => {
+const DraggableComponent = ({ component }: { component: LayoutComponent }) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: component.id,
     data: {
@@ -60,14 +83,17 @@ const DraggableComponent = ({ component }: { component: typeof layoutComponents[
   return (
     <div
       ref={setNodeRef}
-      className="flex flex-col items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-grab active:cursor-grabbing"
+      className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-grab active:cursor-grabbing transition-all hover:border-blue-400"
       {...listeners}
       {...attributes}
     >
-      {component.preview}
-      <span className="mt-2 text-sm font-medium text-gray-700">
+      <div className="mb-3">{component.icon}</div>
+      <span className="text-sm font-medium text-gray-700 mb-1">
         {component.name}
       </span>
+      <p className="text-xs text-gray-500 text-center">
+        {component.description}
+      </p>
     </div>
   );
 };
@@ -87,19 +113,14 @@ export const FlyoutPanel: React.FC<FlyoutPanelProps> = ({ isOpen, activeTab }) =
   const [isClient, setIsClient] = useState(false);
   
   useEffect(() => {
-    // Ensure we're on the client before rendering
     setIsClient(true);
     setTab(activeTab);
   }, [activeTab]);
-  
-  // Don't render anything on the server
-  if (!isClient || !isOpen) return null;
-  
 
+  if (!isClient || !isOpen) return null;
 
   return (
     <div className="w-64 h-full bg-white border-r border-gray-200 shadow-sm flex flex-col">
-      {/* Tabs */}
       <div className="flex-shrink-0 flex border-b border-gray-200">
         {tabs.map((tabItem) => (
           <button
@@ -107,7 +128,7 @@ export const FlyoutPanel: React.FC<FlyoutPanelProps> = ({ isOpen, activeTab }) =
             onClick={() => setTab(tabItem.key)}
             className={`flex-1 py-3 text-sm font-medium transition-colors ${
               tab === tabItem.key
-                ? 'text-green-600 border-b-2 border-green-500'
+                ? 'text-blue-600 border-b-2 border-blue-500'
                 : 'text-gray-500 hover:bg-gray-50'
             }`}
             aria-label={tabItem.label}
@@ -117,7 +138,6 @@ export const FlyoutPanel: React.FC<FlyoutPanelProps> = ({ isOpen, activeTab }) =
         ))}
       </div>
 
-      {/* Content */}
       <div className="flex-1 p-4 overflow-y-auto">
         <ErrorBoundary>
           {tab === 'structure' && <LayoutComponentsList />}

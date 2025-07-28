@@ -1,7 +1,7 @@
 import React from 'react';
-import type { ContainerComponent } from '../../../types';
-import { ComponentRenderer } from '../../canvas/ComponentRenderer';
+import { ComponentRenderer } from '../../../../features/canvas/ComponentRenderer';
 import { useDroppable } from '@dnd-kit/core';
+import type { ContainerComponent, CanvasComponent } from '../../../../types';
 
 interface ContainerProps {
   component: ContainerComponent;
@@ -36,7 +36,7 @@ export const Container: React.FC<ContainerProps> = ({ component, selectedId }) =
       }}
     >
       <div className="flex flex-nowrap">
-        {component.children?.map((child) => (
+        {component.children?.map((child: CanvasComponent) => (
           <div 
             key={child.id} 
             className="px-1" 

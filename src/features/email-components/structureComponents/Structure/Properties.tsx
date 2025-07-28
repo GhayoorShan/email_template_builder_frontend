@@ -20,8 +20,8 @@ import {
   PlusIcon,
   ArrowsUpDownIcon,
 } from "@heroicons/react/24/outline";
-import type { StructureComponent, CanvasComponent } from "../../../types";
-import { useStore } from "../../../store";
+import { useStore } from "../../../../store";
+import type { StructureComponent, CanvasComponent } from "../../../../types";
 import { useSortable } from "@dnd-kit/sortable";
 
 interface SortableItemProps {
@@ -73,12 +73,6 @@ export const StructureProperties: React.FC<StructurePropertiesProps> = ({
   component,
 }) => {
   const updateComponent = useStore((state) => state.updateComponent);
-
-  const handlePropChange = (key: string, value: string) => {
-    updateComponent(component.id, {
-      props: { ...component.props, [key]: value },
-    });
-  };
 
   // Ensure component.children is always an array
   const children = component.children || [];
