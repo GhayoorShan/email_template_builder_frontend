@@ -22,34 +22,39 @@ export const Container: React.FC<ContainerProps> = ({
     <div
       ref={setNodeRef}
       className={`
-        min-h-[100px] w-full transition-all duration-200 border-2 border-transparent
-        ${isSelected ? "border-blue-500 bg-blue-50" : ""}
-        ${isOver ? "border-blue-300 bg-blue-25" : ""}
-        hover:border-gray-300
+        w-full transition-all duration-200
+        ${isSelected ? "ring-2 ring-blue-500" : ""}
+        ${isOver ? "bg-blue-50" : ""}
       `}
       style={{
         backgroundColor: component.props.backgroundColor || "#ffffff",
         padding: component.props.padding || "20px",
-        borderWidth: component.props.borderWidth || "0px",
+        borderWidth: component.props.borderWidth
+          ? parseInt(component.props.borderWidth)
+          : 0,
         borderColor: component.props.borderColor || "#ffffff",
-        borderRadius: component.props.borderRadius || "0px",
+        borderRadius: component.props.borderRadius
+          ? parseInt(component.props.borderRadius)
+          : 0,
+        direction: component.props.direction || "ltr",
+        textAlign: component.props.textAlign || "left",
       }}
     >
-      <div className="w-full">
-        {component.children?.map((child: CanvasComponent) => (
-          <ComponentRenderer
-            key={child.id}
-            component={child}
-            selectedId={selectedId || null}
-          />
-        ))}
-
-        {(!component.children || component.children.length === 0) && (
-          <div className="flex items-center justify-center h-24 text-gray-400 border-2 border-dashed border-gray-300 rounded-lg">
-            <p>Drop content here</p>
-          </div>
-        )}
-      </div>
+      {component.children && component.children.length > 0 ? (
+        <div className="flex flex-col gap-4">
+          {component.children.map((child: CanvasComponent) => (
+            <ComponentRenderer
+              key={child.id}
+              component={child}
+              selectedId={selectedId || null}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="flex items-center justify-center h-32 text-gray-400 border-2 border-dashed border-gray-300 rounded-lg">
+          <p>Drop components here</p>
+        </div>
+      )}
     </div>
   );
 };

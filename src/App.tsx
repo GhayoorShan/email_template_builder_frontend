@@ -1,15 +1,7 @@
 import "./App.css";
 import { Suspense, useState, useEffect, useRef, useTransition } from "react";
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
-import {
-  DndContext,
-  DragOverlay,
-  useSensor,
-  useSensors,
-  PointerSensor,
-  TouchSensor,
-  closestCenter,
-} from "@dnd-kit/core";
+import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, TouchSensor, closestCenter } from "@dnd-kit/core";
 import { useStore } from "./store";
 import type { CanvasComponent } from "./types";
 import { PropertiesPanel } from "./features/editor/PropertiesPanel";
@@ -70,6 +62,45 @@ function App() {
   // Track if a drag is in progress
   const isDraggingRef = useRef(false);
 
+  // Check if a component can be dropped in a target location (Stripo-like rules)
+  const checkDropAllowed = (componentType: string, targetComponent: CanvasComponent | null): boolean => {
+    // Structure can only contain Container components
+    if (targetComponent?.type === 'Structure') {
+      return componentType === 'Container';
+    }
+    
+    // Container can contain Column components or content components
+    if (targetComponent?.type === 'Container') {
+      return componentType === 'Column' || 
+             componentType === 'Text' || 
+             componentType === 'Heading' || 
+             componentType === 'Button' || 
+             componentType === 'Image' || 
+             componentType === 'Divider' || 
+             componentType === 'SocialMedia' || 
+             componentType === 'Menu';
+    }
+    
+    // Column can only contain content components
+    if (targetComponent?.type === 'Column') {
+      return componentType === 'Text' || 
+             componentType === 'Heading' || 
+             componentType === 'Button' || 
+             componentType === 'Image' || 
+             componentType === 'Divider' || 
+             componentType === 'SocialMedia' || 
+             componentType === 'Menu';
+    }
+    
+    // Root level can only contain Structure components
+    if (!targetComponent) {
+      return componentType === 'Structure';
+    }
+    
+    // Default: allow drop
+    return true;
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     isDraggingRef.current = true;
     const { active } = event;
@@ -96,8 +127,14 @@ function App() {
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    isDraggingRef.current = false;
     const { active, over } = event;
-    if (!over) return;
+    if (!over) {
+      // Clear selection if dropped outside
+      setSelectedId(null);
+      setActiveComponent(null);
+      return;
+    }
 
     const overId = over.id.toString();
 
@@ -108,109 +145,72 @@ function App() {
 
     if (isNew) {
       startTransition(() => {
-        // For layout presets, create a structure with containers
-        if (componentType === "Structure" && preset) {
-          const structureId = nanoid();
-          const structure: CanvasComponent = {
-            id: structureId,
-            type: "Structure",
-            parentId: null,
-            children: [],
-            props: {
-              backgroundColor: "#ffffff",
-              padding: "0px",
-              emailWidth: "600px",
-              emailBackgroundColor: "#f4f4f4",
-              fontFamily: "Arial, sans-serif",
-              fontSize: "14px",
-              lineHeight: "1.5",
-              textColor: "#333333",
-              linkColor: "#007bff",
-              maxWidth: "600px",
-              align: "center",
-              containerGap: "20px",
-              containerPadding: {
-                top: "0px",
-                right: "0px",
-                bottom: "0px",
-                left: "0px",
-              },
-            },
-          };
+        // Handle dropping new components with Stripo-like restrictions
+        if (overId === "canvas-root" || overId.startsWith("droppable-")) {
+          let parentId: string | null = null;
+          let index = 0;
 
-          // Create containers based on preset
-          const containers = preset.widths.map((width: string) => ({
-            id: nanoid(),
-            type: "Container",
-            parentId: structureId,
-            children: [],
-            props: {
-              backgroundColor: "#ffffff",
-              padding: "20px",
-              width,
-              textAlign: "left",
-            },
-          }));
+          if (overId === "canvas-root") {
+            parentId = null;
+          } else {
+            parentId = overId.replace("droppable-", "");
+          }
 
-          structure.children = containers;
-          addComponent(structure.type, null, 0, structure);
-        }
-        // For Stripe components
-        else if (componentType === "Stripe") {
-          const stripeId = nanoid();
-          const stripe: CanvasComponent = {
-            id: stripeId,
-            type: "Stripe",
-            parentId: null,
-            children: [],
-            props: {
-              backgroundColor: "#ffffff",
-              padding: "0px",
-              stripeType: "content",
-            },
-          };
-          addComponent(stripe.type, null, 0, stripe);
-        }
-        // For regular components
-        else if (overId === "canvas-root" || overId === "root") {
-          addComponent(componentType as CanvasComponent["type"], "root", 0);
-        } else if (overId.startsWith("droppable-")) {
-          const parentId = overId.replace("droppable-", "");
-          addComponent(componentType as CanvasComponent["type"], parentId, 0);
+          // Enforce drop restrictions based on component type
+          const targetComponent = parentId 
+            ? useStore.getState().findComponent(parentId)
+            : null;
+          
+          // Check if the drop is allowed based on Stripo-like rules
+          const isDropAllowed = checkDropAllowed(componentType as string, targetComponent);
+          
+          if (isDropAllowed) {
+            addComponent(
+              componentType as CanvasComponent["type"],
+              parentId,
+              index,
+              preset
+            );
+          }
         }
       });
-
-      setActiveComponent(null);
-      return;
-    }
-
-    // Handle existing components
-    const existingComponent = useStore
-      .getState()
-      .findComponent(active.id as string);
-    if (existingComponent) {
-      // If we have a valid drop target and it's different from current position, move the component
-      if (over && active.id !== over.id) {
-        let targetParentId: string | null = null;
-
-        if (overId === "canvas-root" || overId === "root") {
-          targetParentId = "root";
-        } else if (overId.startsWith("droppable-")) {
-          targetParentId = overId.replace("droppable-", "");
-        }
-
-        if (targetParentId) {
-          moveComponent(active.id as string, targetParentId, 0);
-        }
-      }
-
-      // Always maintain selection for existing components (whether moved or just clicked)
-      setSelectedId(active.id as string);
-      setActiveComponent(existingComponent);
     } else {
-      // If component not found, clear selection
-      setSelectedId(null);
-      setActiveComponent(null);
+      // Handle moving existing components
+      const existingComponent = useStore
+        .getState()
+        .findComponent(active.id as string);
+
+      if (existingComponent) {
+        // If we have a valid drop target and it's different from current position, move the component
+        if (over && active.id !== over.id) {
+          let targetParentId: string | null = null;
+
+          if (overId === "canvas-root" || overId === "root") {
+            targetParentId = null;
+          } else if (overId.startsWith("droppable-")) {
+            targetParentId = overId.replace("droppable-", "");
+          }
+
+          // Enforce drop restrictions for moving components
+          const targetComponent = targetParentId 
+            ? useStore.getState().findComponent(targetParentId)
+            : null;
+            
+          const isDropAllowed = checkDropAllowed(existingComponent.type, targetComponent);
+          
+          if (targetParentId && isDropAllowed) {
+            moveComponent(active.id as string, targetParentId, 0);
+          }
+        }
+
+        // Always maintain selection for existing components (whether moved or just clicked)
+        setSelectedId(active.id as string);
+        setActiveComponent(existingComponent);
+      } else {
+        // If component not found, clear selection
+        setSelectedId(null);
+        setActiveComponent(null);
+      }
     }
   };
 
@@ -313,12 +313,3 @@ function App() {
 }
 
 export default App;
-function nanoid(size: number = 10): string {
-  let id = "";
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < size; i++) {
-    id += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return id;
-}

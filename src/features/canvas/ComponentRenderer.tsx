@@ -136,7 +136,7 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = ({ component,
         {...listeners}
         onClick={(e) => e.stopPropagation()}
       />
-      <RenderedComponent component={component}>
+      <RenderedComponent component={component} selectedId={selectedId}>
         <div className="absolute top-2 left-2 z-20 text-xs text-white bg-blue-500 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
           {component.type}
         </div>

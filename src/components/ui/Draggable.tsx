@@ -4,11 +4,19 @@ import { useDraggable } from "@dnd-kit/core";
 interface DraggableProps {
   id: string;
   children: React.ReactNode;
+  type?: string;
+  isNew?: boolean;
+  preset?: any;
 }
 
-export function Draggable({ id, children }: DraggableProps) {
+export function Draggable({ id, children, type, isNew = true, preset }: DraggableProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: id,
+    data: {
+      type: type || id,
+      isNew,
+      preset,
+    },
   });
 
   const style = transform

@@ -71,7 +71,7 @@ const ComponentPanel: React.FC<ComponentPanelProps> = ({ activeTab }) => {
       <div className="p-3">
         <div className="grid grid-cols-2 gap-3">
           {modules.map((module: CanvasComponent) => (
-            <Draggable key={module.id} id={module.id}>
+            <Draggable key={module.id} id={module.id} type={module.type} isNew={false}>
               <ModuleItem component={module} />
             </Draggable>
           ))}
@@ -98,7 +98,7 @@ const ComponentPanel: React.FC<ComponentPanelProps> = ({ activeTab }) => {
     <div className="p-3">
       <div className={`grid gap-3 ${isStructureTab ? 'grid-cols-1' : 'grid-cols-2'}`}>
         {filteredComponents.map((comp) => (
-          <Draggable key={comp.id} id={comp.id}>
+          <Draggable key={comp.id} id={`new-${comp.id}`} type={comp.id} isNew={true}>
             {isStructureTab ? (
               <div className="flex items-center justify-center p-4 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg cursor-grab active:cursor-grabbing hover:bg-gray-100 hover:border-blue-400 transition-all h-24">
                 <span className="font-medium text-sm text-gray-500 text-center">
